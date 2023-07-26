@@ -1,0 +1,7 @@
+{
+  imports = [
+    ./colmena
+    ./nixosModules
+    ./cloudFormation
+  ];
+}

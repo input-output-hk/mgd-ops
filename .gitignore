@@ -1,0 +1,4 @@
+/.direnv
+/treefmt.toml
+/.ssh_config
+/cloudFormation
