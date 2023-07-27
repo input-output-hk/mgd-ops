@@ -15,6 +15,7 @@ in {
             aws.source = "hashicorp/aws";
             null.source = "hashicorp/null";
             local.source = "hashicorp/local";
+            tls.source = "hashicorp/tls";
           };
 
           backend = {
@@ -32,7 +33,7 @@ in {
             instance_type = "c5.2xlarge";
             ami = amis."23.05".eu-central-1.hvm-ebs;
             monitoring = true;
-            key_name = "ssh_key";
+            key_name = "\${aws_key_pair.bootstrap.key_name}";
             security_groups = ["allow_ssh"];
             tags.Name = "perf1";
 
@@ -46,7 +47,20 @@ in {
             lifecycle = [{ignore_changes = ["ami" "user_data"];}];
           };
 
-          aws_eip.perf1.instance = "\${aws_instance.perf1.id}";
+          tls_private_key.bootstrap = {
+            algorithm = "RSA";
+            rsa_bits = 4096;
+          };
+
+          aws_key_pair.bootstrap = {
+            key_name = "bootstrap";
+            public_key = "\${tls_private_key.bootstrap.public_key_openssh}";
+          };
+
+          aws_eip.perf1 = {
+            instance = "\${aws_instance.perf1.id}";
+            tags.Name = "perf1";
+          };
 
           aws_eip_association.perf1 = {
             instance_id = "\${aws_instance.perf1.id}";

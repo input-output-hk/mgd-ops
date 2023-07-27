@@ -26,6 +26,7 @@
           hashicorp.external
           hashicorp.local
           hashicorp.null
+          hashicorp.tls
           loafoe.ssh
         ]);
 
