@@ -15,11 +15,11 @@ parts @ {
   }: {
     imports = [
       parts.config.flake.nixosModules.wireguard
-      inputs.ragenix.nixosModules.age
+      inputs.sops-nix.nixosModules.default
       inputs.auth-keys-hub.nixosModules.auth-keys-hub
     ];
 
-    age.secrets.github-token = {
+    sops.secrets.github-token = {
       file = "${self}/secrets/github-token.age";
       owner = config.programs.auth-keys-hub.user;
       inherit (config.programs.auth-keys-hub) group;
@@ -37,9 +37,12 @@ parts @ {
       };
     };
 
-    services.openssh = {
-      enable = true;
-      settings.PasswordAuthentication = false;
+    services = {
+      chrony.enable = true;
+      openssh = {
+        enable = true;
+        settings.PasswordAuthentication = false;
+      };
     };
   });
 }

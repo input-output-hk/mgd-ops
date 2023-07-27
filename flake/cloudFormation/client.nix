@@ -2,6 +2,7 @@
   inputs,
   name,
   amis,
+  type,
   region,
   ...
 }: {

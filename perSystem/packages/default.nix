@@ -14,6 +14,21 @@
       bootstrap = pkgs.callPackage ./bootstrap {};
       inherit (inputs'.nixpkgs-unstable.legacyPackages) rain;
 
+      terraform = let
+        inherit
+          (inputs'.terraform-providers.legacyPackages.providers)
+          hashicorp
+          loafoe
+          ;
+      in
+        pkgs.terraform.withPlugins (_: [
+          hashicorp.aws
+          hashicorp.external
+          hashicorp.local
+          hashicorp.null
+          loafoe.ssh
+        ]);
+
       formation = pkgs.writeText "formation.json" (
         let
           amis = import "${inputs'.nixpkgs.legacyPackages.path}/nixos/modules/virtualisation/ec2-amis.nix";

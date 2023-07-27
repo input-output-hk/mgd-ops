@@ -3,5 +3,6 @@
     ./colmena
     ./nixosModules
     ./cloudFormation
+    ./terraform
   ];
 }

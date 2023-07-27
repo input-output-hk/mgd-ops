@@ -17,10 +17,11 @@
           wireguard-tools
           nushell
           self'.packages.rain
+          self'.packages.terraform
           awscli2
+          sops
         ])
         ++ (with inputs'; [
-          ragenix.packages.default
           colmena.packages.colmena
         ]);
 
@@ -45,10 +46,10 @@
       in ''
         ln -sf ${lib.getExe pre-push} .git/hooks/
         ln -sf ${config.treefmt.build.configFile} treefmt.toml
-        ln -sf ${config.packages.ssh_config} .ssh_config
       '';
+      # ln -sf ${config.packages.ssh_config} .ssh_config
 
-      SSH_CONFIG_FILE = config.packages.ssh_config;
+      # SSH_CONFIG_FILE = config.packages.ssh_config;
 
       RULES = "secrets/secrets.nix";
     };
