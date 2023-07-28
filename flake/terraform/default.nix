@@ -1,6 +1,7 @@
 {
   inputs,
   self,
+  lib,
   ...
 }: let
   amis = import "${inputs.nixpkgs}/nixos/modules/virtualisation/ec2-amis.nix";
@@ -28,10 +29,17 @@ in {
           };
         };
 
+        # Common parameters:
+        #   data.aws_caller_identity.current.account_id
+        #   data.aws_region.current.name
+        data.aws_caller_identity.current = {};
+        data.aws_region.current = {};
+
         resource = {
           aws_instance.perf1 = {
             instance_type = "c5.2xlarge";
             ami = amis."23.05".eu-central-1.hvm-ebs;
+            iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
             monitoring = true;
             key_name = "\${aws_key_pair.bootstrap.key_name}";
             security_groups = ["allow_ssh"];
@@ -51,6 +59,61 @@ in {
             };
 
             lifecycle = [{ignore_changes = ["ami" "user_data"];}];
+          };
+
+          aws_iam_instance_profile.ec2_profile = {
+            name = "ec2Profile";
+            role = "\${aws_iam_role.ec2_role.name}";
+          };
+
+          aws_iam_role.ec2_role = {
+            name = "ec2Role";
+            assume_role_policy = builtins.toJSON {
+              Version = "2012-10-17";
+              Statement = [
+                {
+                  Action = "sts:AssumeRole";
+                  Effect = "Allow";
+                  Principal.Service = "ec2.amazonaws.com";
+                }
+              ];
+            };
+          };
+
+          aws_iam_role_policy_attachment = let
+            mkRoleAttachments = roleResourceName: policyList:
+              lib.flip lib.recursiveUpdate (lib.listToAttrs (map (policy: {
+                name = "${roleResourceName}_policy_attachment_${policy}";
+                value = {
+                  role = "\${aws_iam_role.${roleResourceName}.name}";
+                  policy_arn = "\${aws_iam_policy.${policy}.arn}";
+                };
+              }) policyList));
+          in lib.pipe {} [
+            (mkRoleAttachments "ec2_role" ["kms_user"])
+          ];
+
+          aws_iam_policy.kms_user = {
+            name = "kmsUser";
+            policy = builtins.toJSON {
+              Version = "2012-10-17";
+              Statement = [
+                {
+                  Effect = "Allow";
+                  Action = [
+                    "kms:Encrypt"
+                    "kms:Decrypt"
+                    "kms:ReEncrypt*"
+                    "kms:GenerateDataKey*"
+                    "kms:DescribeKey"
+                  ];
+
+                  # KMS `kmsKey` is bootstrapped by cloudFormation rain.
+                  # Scope this policy to a specific resource to allow for multiple keys and key policies.
+                  Resource = "arn:aws:kms:\${data.aws_region.current.name}:\${data.aws_caller_identity.current.account_id}:alias/kmsKey";
+                }
+              ];
+            };
           };
 
           tls_private_key.bootstrap = {
