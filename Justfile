@@ -1,6 +1,9 @@
 set shell := ["nu", "-c"]
 set positional-arguments
 
+default:
+  just --list
+
 apply-all:
   colmena apply --verbose
 
