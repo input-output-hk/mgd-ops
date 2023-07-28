@@ -18,8 +18,8 @@ bootstrap HOSTNAME:
 
 cf STACKNAME:
   mkdir cloudFormation
-  nix eval --json ".#cloudFormation.{{STACKNAME}}" | jq | save -f "cloudFormation/{{STACKNAME}}.json"
-  rain deploy -y ./cloudFormation/{{STACKNAME}}.json
+  nix eval --json ".#cloudFormation.{{STACKNAME}}" | jq | save --force "cloudFormation/{{STACKNAME}}.json"
+  rain deploy --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
 
 c1:
   just cf ci1
