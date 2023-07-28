@@ -48,8 +48,7 @@ in {
           };
 
           tls_private_key.bootstrap = {
-            algorithm = "RSA";
-            rsa_bits = 4096;
+            algorithm = "ED25519";
           };
 
           aws_key_pair.bootstrap = {
