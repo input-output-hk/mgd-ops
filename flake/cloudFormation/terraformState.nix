@@ -5,9 +5,15 @@
   Resources = {
     S3Bucket = {
       Type = "AWS::S3::Bucket";
+      DeletionPolicy = "Retain";
       Properties = {
         BucketName = "cardano-perf-terraform";
-        BucketEncryption.ServerSideEncryptionConfiguration = [{BucketKeyEnabled = true;}];
+        BucketEncryption.ServerSideEncryptionConfiguration = [
+          {
+            BucketKeyEnabled = false;
+            ServerSideEncryptionByDefault.SSEAlgorithm = "AES256";
+          }
+        ];
         VersioningConfiguration.Status = "Enabled";
       };
     };
