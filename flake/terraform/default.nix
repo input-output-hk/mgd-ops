@@ -44,6 +44,12 @@ in {
               delete_on_termination = true;
             };
 
+            metadata_options = {
+              http_endpoint = "enabled";
+              http_put_response_hop_limit = 2;
+              http_tokens = "optional";
+            };
+
             lifecycle = [{ignore_changes = ["ami" "user_data"];}];
           };
 
