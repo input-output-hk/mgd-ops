@@ -1,5 +1,6 @@
 {
   flake.nixosModules.nomad-master = {
+    deployment.tags = ["nomad-master"];
     services.nomad = {
       enable = true;
       settings = {

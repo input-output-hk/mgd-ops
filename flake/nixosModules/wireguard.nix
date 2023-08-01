@@ -6,7 +6,10 @@
     nodes,
     ...
   }: {
-    age.secrets.wg.file = "${self}/secrets/nodes/${name}/wg_priv.age";
+    sops.secrets.wg = {
+      sopsFile = "${self}/secrets/wg_private_${name}";
+      format = "binary";
+    };
 
     networking = {
       nat = {
@@ -26,7 +29,7 @@
         interfaces.wg0 = let
           wgIp = name: "10.200.0." + lib.removePrefix "ci" name;
         in {
-          privateKeyFile = config.age.secrets.wg.path;
+          privateKeyFile = config.sops.secrets.wg.path;
           ips = ["${wgIp name}/32"];
           listenPort = 51820;
 
@@ -34,7 +37,7 @@
             name = nodeName;
             allowedIPs = ["${wgIp nodeName}/32"];
             endpoint = "${node.config.deployment.targetHost}:${toString node.config.networking.wireguard.interfaces.wg0.listenPort}";
-            publicKey = lib.fileContents "${self}/flake/colmena/nodes/${nodeName}/wg_pub.key";
+            publicKey = lib.fileContents "${self}/secrets/wg_public_${nodeName}";
             persistentKeepalive = 25;
           }) (removeAttrs nodes [name]);
         };

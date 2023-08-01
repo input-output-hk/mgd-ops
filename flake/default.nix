@@ -1,8 +1,9 @@
 {
   imports = [
+    ./cloudFormation
+    ./cluster
     ./colmena
     ./nixosModules
-    ./cloudFormation
     ./terraform
   ];
 }

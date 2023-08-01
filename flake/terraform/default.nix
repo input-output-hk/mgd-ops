@@ -2,12 +2,33 @@
   inputs,
   self,
   lib,
+  config,
   ...
 }: let
+  inherit (config.flake) cluster;
   amis = import "${inputs.nixpkgs}/nixos/modules/virtualisation/ec2-amis.nix";
-  inherit (self) nixosConfigurations;
+
+  underscore = lib.replaceStrings ["-"] ["_"];
+  awsProviderFor = region: "aws.${underscore region}";
+
+  nixosConfigurations = lib.mapAttrs (_: node: node.config) config.flake.nixosConfigurations;
+  nodes = lib.filterAttrs (_: node: node.aws != null) nixosConfigurations;
+  mapNodes = f: lib.mapAttrs f nodes;
+  pp = v: lib.traceSeq v v;
+
+  regions =
+    lib.mapAttrsToList (region: enabled: {
+      region = underscore region;
+      count =
+        if enabled
+        then 1
+        else 0;
+    })
+    cluster.regions;
+
+  mapRegions = f: lib.foldl' lib.recursiveUpdate {} (lib.forEach regions f);
 in {
-  flake.terraform.test = inputs.terranix.lib.terranixConfiguration {
+  flake.terraform.cluster = inputs.terranix.lib.terranixConfiguration {
     system = "x86_64-linux";
     modules = [
       {
@@ -23,11 +44,16 @@ in {
             s3 = {
               bucket = "cardano-perf-terraform";
               key = "terraform";
-              region = "eu-central-1";
+              region = cluster.region;
               dynamodb_table = "terraform";
             };
           };
         };
+
+        provider.aws = lib.forEach (builtins.attrNames cluster.regions) (region: {
+          inherit region;
+          alias = underscore region;
+        });
 
         # Common parameters:
         #   data.aws_caller_identity.current.account_id
@@ -36,14 +62,16 @@ in {
         data.aws_region.current = {};
 
         resource = {
-          aws_instance.perf1 = {
-            instance_type = "c5.2xlarge";
-            ami = amis."23.05".eu-central-1.hvm-ebs;
+          aws_instance = mapNodes (name: node: {
+            count = node.aws.instance.count;
+            provider = awsProviderFor node.aws.region;
+            instance_type = node.aws.instance.instance_type;
+            ami = amis.${node.system.stateVersion}.${node.aws.region}.hvm-ebs;
             iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
             monitoring = true;
-            key_name = "\${aws_key_pair.bootstrap.key_name}";
+            key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
             security_groups = ["allow_ssh"];
-            tags.Name = "perf1";
+            tags = node.aws.instance.tags or {Name = name;};
 
             root_block_device = {
               volume_type = "gp3";
@@ -59,7 +87,7 @@ in {
             };
 
             lifecycle = [{ignore_changes = ["ami" "user_data"];}];
-          };
+          });
 
           aws_iam_instance_profile.ec2_profile = {
             name = "ec2Profile";
@@ -83,15 +111,17 @@ in {
           aws_iam_role_policy_attachment = let
             mkRoleAttachments = roleResourceName: policyList:
               lib.flip lib.recursiveUpdate (lib.listToAttrs (map (policy: {
-                name = "${roleResourceName}_policy_attachment_${policy}";
-                value = {
-                  role = "\${aws_iam_role.${roleResourceName}.name}";
-                  policy_arn = "\${aws_iam_policy.${policy}.arn}";
-                };
-              }) policyList));
-          in lib.pipe {} [
-            (mkRoleAttachments "ec2_role" ["kms_user"])
-          ];
+                  name = "${roleResourceName}_policy_attachment_${policy}";
+                  value = {
+                    role = "\${aws_iam_role.${roleResourceName}.name}";
+                    policy_arn = "\${aws_iam_policy.${policy}.arn}";
+                  };
+                })
+                policyList));
+          in
+            lib.pipe {} [
+              (mkRoleAttachments "ec2_role" ["kms_user"])
+            ];
 
           aws_iam_policy.kms_user = {
             name = "kmsUser";
@@ -116,68 +146,85 @@ in {
             };
           };
 
-          tls_private_key.bootstrap = {
-            algorithm = "ED25519";
-          };
+          tls_private_key.bootstrap.algorithm = "ED25519";
 
-          aws_key_pair.bootstrap = {
-            key_name = "bootstrap";
-            public_key = "\${tls_private_key.bootstrap.public_key_openssh}";
-          };
+          aws_key_pair = mapRegions ({
+            count,
+            region,
+          }: {
+            "bootstrap_${region}" = {
+              inherit count;
+              provider = awsProviderFor region;
+              key_name = "bootstrap";
+              public_key = "\${tls_private_key.bootstrap.public_key_openssh}";
+            };
+          });
 
-          aws_eip.perf1 = {
-            instance = "\${aws_instance.perf1.id}";
-            tags.Name = "perf1";
-          };
+          aws_eip = mapNodes (name: node: {
+            count = node.aws.instance.count;
+            provider = awsProviderFor node.aws.region;
+            instance = "\${aws_instance.${name}[0].id}";
+            tags.Name = name;
+          });
 
-          aws_eip_association.perf1 = {
-            instance_id = "\${aws_instance.perf1.id}";
-            allocation_id = "\${aws_eip.perf1.id}";
-          };
+          aws_eip_association = mapNodes (name: node: {
+            count = node.aws.instance.count;
+            provider = awsProviderFor node.aws.region;
+            instance_id = "\${aws_instance.${name}[0].id}";
+            allocation_id = "\${aws_eip.${name}[0].id}";
+          });
 
-          aws_security_group.allow_ssh = {
-            name = "allow_ssh";
-            description = "Allow SSH";
+          aws_security_group = mapRegions ({
+            region,
+            count,
+          }: {
+            "allow_ssh_${region}" = {
+              inherit count;
+              provider = awsProviderFor region;
+              name = "allow_ssh";
+              description = "Allow SSH";
 
-            ingress = [
-              {
-                description = "Allow SSH";
-                from_port = 22;
-                to_port = 22;
-                protocol = "tcp";
-                cidr_blocks = ["0.0.0.0/0"];
-                ipv6_cidr_blocks = ["::/0"];
-                prefix_list_ids = [];
-                security_groups = [];
-                self = true;
-              }
-            ];
+              ingress = [
+                {
+                  description = "Allow SSH";
+                  from_port = 22;
+                  to_port = 22;
+                  protocol = "tcp";
+                  cidr_blocks = ["0.0.0.0/0"];
+                  ipv6_cidr_blocks = ["::/0"];
+                  prefix_list_ids = [];
+                  security_groups = [];
+                  self = true;
+                }
+              ];
 
-            egress = [
-              {
-                description = "Allow outbound traffic";
-                from_port = 0;
-                to_port = 0;
-                protocol = "-1";
-                cidr_blocks = ["0.0.0.0/0"];
-                ipv6_cidr_blocks = ["::/0"];
-                prefix_list_ids = [];
-                security_groups = [];
-                self = true;
-              }
-            ];
-          };
+              egress = [
+                {
+                  description = "Allow outbound traffic";
+                  from_port = 0;
+                  to_port = 0;
+                  protocol = "-1";
+                  cidr_blocks = ["0.0.0.0/0"];
+                  ipv6_cidr_blocks = ["::/0"];
+                  prefix_list_ids = [];
+                  security_groups = [];
+                  self = true;
+                }
+              ];
+            };
+          });
 
           local_file.ssh_config = {
             filename = "\${path.module}/.ssh_config";
+            file_permission = "0600";
             content = builtins.concatStringsSep "\n" (map (name: ''
                 Host ${name}
-                  HostName ''${aws_eip.${name}.public_ip}
+                  HostName ''${aws_eip.${name}[0].public_ip}
                   User root
                   UserKnownHostsFile /dev/null
                   StrictHostKeyChecking no
               '')
-              (builtins.attrNames nixosConfigurations));
+              (builtins.attrNames (lib.filterAttrs (_: node: node.aws.instance.count > 0) nodes)));
           };
         };
       }

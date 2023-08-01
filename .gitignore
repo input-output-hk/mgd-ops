@@ -1,6 +1,7 @@
 /.direnv
 /treefmt.toml
 /.ssh_config
+/.ssh_key
 /cloudFormation
 /.terraform
 /.terraform*

@@ -19,8 +19,12 @@ parts @ {
       inputs.auth-keys-hub.nixosModules.auth-keys-hub
     ];
 
+    networking.hostName = name;
+    deployment.targetHost = name;
+
     sops.secrets.github-token = {
-      file = "${self}/secrets/github-token.age";
+      sopsFile = "${self}/secrets/github-token";
+      format = "binary";
       owner = config.programs.auth-keys-hub.user;
       inherit (config.programs.auth-keys-hub) group;
     };
@@ -33,7 +37,7 @@ parts @ {
           "input-output-hk/performance-tracing"
           "input-output-hk/node-sre"
         ];
-        tokenFile = config.age.secrets.github-token.path;
+        tokenFile = config.sops.secrets.github-token.path;
       };
     };
 

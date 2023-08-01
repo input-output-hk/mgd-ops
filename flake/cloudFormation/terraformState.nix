@@ -2,10 +2,14 @@
   AWSTemplateFormatVersion = "2010-09-09";
   Description = "Terraform state handling";
 
+  # Resources here will be created in the AWS_REGION and AWS_PROFILE from your
+  # environment variables.
+  # Execute this using: `just cf terraformState`
+
   Resources = {
     kmsKey = {
       Type = "AWS::KMS::Key";
-      Properties =  {
+      Properties = {
         KeyPolicy."Fn::Sub" = builtins.toJSON {
           Version = "2012-10-17";
           Statement = [
@@ -24,6 +28,7 @@
     kmsKeyAlias = {
       Type = "AWS::KMS::Alias";
       Properties = {
+        # This name is used in various places, check before changing it.
         AliasName = "alias/kmsKey";
         TargetKeyId.Ref = "kmsKey";
       };
