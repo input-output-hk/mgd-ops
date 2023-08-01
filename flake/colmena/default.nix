@@ -23,9 +23,7 @@ in {
 
       mkNodes = count: region: type: 1;
 
-      delete = {
-        aws.instance.count = 0;
-      };
+      delete.aws.instance.count = 0;
     in {
       meta.nixpkgs = import inputs.nixpkgs {
         system = "x86_64-linux";
