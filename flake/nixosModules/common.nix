@@ -28,7 +28,8 @@ parts @ {
       hostName = name;
       firewall = {
         enable = true;
-        allowedTCPPorts = [22];
+        allowedTCPPorts = [22 4647 4646];
+        allowedUDPPorts = [4648];
       };
     };
 
@@ -48,10 +49,12 @@ parts @ {
       wantedBy = ["multi-user.target"];
       after = ["network-online.target"];
 
+      script = ''
+        ${config.system.activationScripts.setupSecrets.text}
+        systemctl restart wireguard-wg0.service
+      '';
+
       serviceConfig = {
-        script = ''
-          ${config.system.activationScripts.setupSecrets.text}
-        '';
         Type = "oneshot";
         RemainAfterExit = true;
         Restart = "on-failure"; # because oneshot

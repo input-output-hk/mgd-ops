@@ -60,7 +60,7 @@ in {
           nixos-23-05
         ];
 
-        master = {imports = [eu-central-1 r5-xlarge (volume 100) nomad-master];};
+        master = {imports = [eu-central-1 r5-xlarge (volume 100) nomad-master (wireguard "eu-central-1" 1)];};
       }
       // (mkNodes 1 ap-southeast-2 [c5-2xlarge nomad-client])
       // (mkNodes 1 us-east-1 [c5-2xlarge nomad-client])
