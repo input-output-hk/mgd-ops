@@ -1,8 +1,8 @@
 {
   imports = [
     ./zfs-kexec-image
-    ./ssh-config
     ./pre-push
+    ./go-discover
   ];
 
   perSystem = {
@@ -12,7 +12,6 @@
     ...
   }: {
     packages = {
-      bootstrap = pkgs.callPackage ./bootstrap {};
       inherit (inputs'.nixpkgs-unstable.legacyPackages) rain;
 
       terraform = let
