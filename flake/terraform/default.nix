@@ -60,6 +60,7 @@ in {
         #   data.aws_region.current.name
         data.aws_caller_identity.current = {};
         data.aws_region.current = {};
+        data.aws_route53_zone.selected.name = "${cluster.domain}.";
 
         resource = {
           aws_instance = mapNodes (name: node: {
@@ -240,6 +241,16 @@ in {
               ];
             };
           });
+
+          aws_route53_record = mapNodes (
+            nodeName: node: {
+              zone_id = "\${data.aws_route53_zone.selected.zone_id}";
+              name = "${nodeName}.\${data.aws_route53_zone.selected.name}";
+              type = "A";
+              ttl = "300";
+              records = ["\${aws_eip.${nodeName}[0].public_ip}"];
+            }
+          );
 
           local_file.ssh_config = {
             filename = "\${path.module}/.ssh_config";

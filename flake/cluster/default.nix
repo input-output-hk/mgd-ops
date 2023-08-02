@@ -15,5 +15,8 @@
       eu-central-1 = true;
       ap-southeast-2 = true;
     };
+
+    domain = "perf.aws.iohkdev.io";
+    bucketName = "cardano-perf-terraform";
   };
 }

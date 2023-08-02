@@ -1,5 +1,3 @@
-{inputs, ...}: {
-  flake.cloudFormation = {
-    terraformState = import ./terraformState.nix {};
-  };
+{
+  imports = [./terraformState.nix];
 }

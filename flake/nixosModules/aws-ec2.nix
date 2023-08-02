@@ -16,6 +16,11 @@
             instance = lib.mkOption {
               type = lib.types.anything;
             };
+
+            route53 = lib.mkOption {
+              default = null;
+              type = lib.types.nullOr lib.types.anything;
+            };
           };
 
           config = {
