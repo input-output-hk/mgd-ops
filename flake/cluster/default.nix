@@ -11,9 +11,9 @@
     # Set a region to false to set its count to 0 in terraform.
     # After applying once you can remove the line.
     regions = {
-      us-east-2 = false;
       us-east-1 = true;
       eu-central-1 = true;
+      ap-southeast-2 = true;
     };
   };
 }

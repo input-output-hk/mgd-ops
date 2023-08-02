@@ -70,7 +70,9 @@ in {
             iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
             monitoring = true;
             key_name = "\${aws_key_pair.bootstrap_${underscore node.aws.region}[0].key_name}";
-            security_groups = ["allow_ssh"];
+            vpc_security_group_ids = [
+              "\${aws_security_group.common_${underscore node.aws.region}[0].id}"
+            ];
             tags = node.aws.instance.tags or {Name = name;};
 
             root_block_device = {
@@ -110,17 +112,17 @@ in {
 
           aws_iam_role_policy_attachment = let
             mkRoleAttachments = roleResourceName: policyList:
-              lib.flip lib.recursiveUpdate (lib.listToAttrs (map (policy: {
+              lib.listToAttrs (map (policy: {
                   name = "${roleResourceName}_policy_attachment_${policy}";
                   value = {
                     role = "\${aws_iam_role.${roleResourceName}.name}";
                     policy_arn = "\${aws_iam_policy.${policy}.arn}";
                   };
                 })
-                policyList));
+                policyList);
           in
-            lib.pipe {} [
-              (mkRoleAttachments "ec2_role" ["kms_user"])
+            lib.foldl' lib.recursiveUpdate {} [
+              (mkRoleAttachments "ec2_role" ["kms_user" "ec2_discover"])
             ];
 
           aws_iam_policy.kms_user = {
@@ -130,17 +132,27 @@ in {
               Statement = [
                 {
                   Effect = "Allow";
-                  Action = [
-                    "kms:Encrypt"
-                    "kms:Decrypt"
-                    "kms:ReEncrypt*"
-                    "kms:GenerateDataKey*"
-                    "kms:DescribeKey"
-                  ];
+                  Action = ["kms:Decrypt" "kms:DescribeKey"];
 
                   # KMS `kmsKey` is bootstrapped by cloudFormation rain.
                   # Scope this policy to a specific resource to allow for multiple keys and key policies.
-                  Resource = "arn:aws:kms:\${data.aws_region.current.name}:\${data.aws_caller_identity.current.account_id}:alias/kmsKey";
+                  # Resource = "arn:aws:kms:\${data.aws_region.current.name}:\${data.aws_caller_identity.current.account_id}:alias/kmsKey";
+                  Resource = "arn:aws:kms:*:\${data.aws_caller_identity.current.account_id}:key/*";
+                  Condition."ForAnyValue:StringLike"."kms:ResourceAliases" = "alias/kmsKey";
+                }
+              ];
+            };
+          };
+
+          aws_iam_policy.ec2_discover = {
+            name = "ec2_discover";
+            policy = builtins.toJSON {
+              Version = "2012-10-17";
+              Statement = [
+                {
+                  Effect = "Allow";
+                  Action = ["ec2:DescribeInstances"];
+                  Resource = "*";
                 }
               ];
             };
@@ -174,15 +186,19 @@ in {
             allocation_id = "\${aws_eip.${name}[0].id}";
           });
 
+          # To remove or rename a security group, keep it here while removing
+          # the reference from the instance. Then apply, and if that succeeds,
+          # remove the group here and apply again.
           aws_security_group = mapRegions ({
             region,
             count,
           }: {
-            "allow_ssh_${region}" = {
+            "common_${region}" = {
               inherit count;
               provider = awsProviderFor region;
-              name = "allow_ssh";
-              description = "Allow SSH";
+              name = "common";
+              description = "Allow common ports";
+              lifecycle = [{create_before_destroy = true;}];
 
               ingress = [
                 {
@@ -190,6 +206,17 @@ in {
                   from_port = 22;
                   to_port = 22;
                   protocol = "tcp";
+                  cidr_blocks = ["0.0.0.0/0"];
+                  ipv6_cidr_blocks = ["::/0"];
+                  prefix_list_ids = [];
+                  security_groups = [];
+                  self = true;
+                }
+                {
+                  description = "Allow Wireguard";
+                  from_port = 51820;
+                  to_port = 51820;
+                  protocol = "udp";
                   cidr_blocks = ["0.0.0.0/0"];
                   ipv6_cidr_blocks = ["::/0"];
                   prefix_list_ids = [];
@@ -217,14 +244,21 @@ in {
           local_file.ssh_config = {
             filename = "\${path.module}/.ssh_config";
             file_permission = "0600";
-            content = builtins.concatStringsSep "\n" (map (name: ''
-                Host ${name}
-                  HostName ''${aws_eip.${name}[0].public_ip}
-                  User root
-                  UserKnownHostsFile /dev/null
-                  StrictHostKeyChecking no
-              '')
-              (builtins.attrNames (lib.filterAttrs (_: node: node.aws.instance.count > 0) nodes)));
+            content = ''
+              Host *
+                User root
+                UserKnownHostsFile /dev/null
+                StrictHostKeyChecking no
+                IdentityFile .ssh_key
+
+              ${
+                builtins.concatStringsSep "\n" (map (name: ''
+                    Host ${name}
+                      HostName ''${aws_eip.${name}[0].public_ip}
+                  '')
+                  (builtins.attrNames (lib.filterAttrs (_: node: node.aws.instance.count > 0) nodes)))
+              }
+            '';
           };
         };
       }

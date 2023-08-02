@@ -45,14 +45,13 @@ cf STACKNAME:
   nix eval --json '.#cloudFormation.{{STACKNAME}}' | jq | save --force 'cloudFormation/{{STACKNAME}}.json'
   rain deploy --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
 
-wg-genkey HOSTNAME:
+wg-genkey KMS HOSTNAME:
   #!/usr/bin/env nu
-  let private = 'secrets/wg_private_{{HOSTNAME}}'
-  let public = 'secrets/wg_public_{{HOSTNAME}}'
-  let kms = (nix eval --raw '.#cluster.kms')
+  let private = 'secrets/wireguard_{{HOSTNAME}}.enc'
+  let public = 'secrets/wireguard_{{HOSTNAME}}.txt'
 
   if not ($private | path exists) {
-    wg genkey | sops --kms $kms -e /dev/stdin | save $private
+    wg genkey | sops --kms "{{KMS}}" -e /dev/stdin | save $private
     git add $private
   }
 
@@ -64,7 +63,8 @@ wg-genkey HOSTNAME:
 wg-genkeys:
   #!/usr/bin/env nu
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
-  for node in $nodes { just wg-genkey $node }
+  let kms = (nix eval --raw '.#cluster.kms')
+  for node in $nodes { just wg-genkey $kms $node }
 
 bootstrap HOSTNAME:
   nix run '.#bootstrap' -- --verbose --flake '.#{{HOSTNAME}}'
