@@ -3,26 +3,31 @@
   moduleWithSystem,
   ...
 }: {
-  flake.nixosModules.nomad-master = moduleWithSystem ({self'}: {
+  flake.nixosModules.nomad-server = moduleWithSystem ({self'}: {
     lib,
     config,
     name,
     nodes,
     ...
   }: {
-    deployment.tags = ["nomad-master"];
-    aws.instance.tags.Nomad = "cardano-perf-master";
+    deployment.tags = ["nomad-server"];
+    aws.instance.tags.Nomad = "cardano-perf-server";
 
     services.nomad = {
       enable = true;
       enableDocker = false;
       package = self'.packages.nomad;
+
       settings = {
-        advertise = {
-          http = "10.200.0.1";
-          rpc = "10.200.0.1";
-          serf = "10.200.0.1";
+        advertise = let
+          mask = builtins.elemAt config.networking.wireguard.interfaces.wg0.ips 0;
+          ip = lib.removeSuffix "/32" mask;
+        in {
+          http = ip;
+          rpc = ip;
+          serf = ip;
         };
+
         server = {
           enabled = true;
           bootstrap_expect = 1;

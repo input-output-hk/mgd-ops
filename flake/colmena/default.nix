@@ -10,6 +10,34 @@ in {
     nixosConfigurations = (inputs.colmena.lib.makeHive config.flake.colmena).nodes;
 
     colmena = let
+      mkNode = name: wgIp: imports:
+      # shortRegion = lib.substring 0 2 region.aws.region;
+      # wg = wireguard region.aws.region counter;
+      {
+        "${name}" = {
+          imports =
+            [
+              (volume 60)
+              {networking.wireguard.interfaces.wg0.ips = ["${wgIp}/32"];}
+            ]
+            ++ imports;
+        };
+      };
+
+      mkNodeN = nameFormat: wgIpFormat: imports: n: let
+        n' = n + 1;
+        fixed2 = lib.fixedWidthNumber 2 n';
+        replace = lib.replaceStrings ["%02d" "%d"] [fixed2 (toString n')];
+        name = replace nameFormat;
+        wgIp = replace wgIpFormat;
+      in
+        mkNode name wgIp imports;
+
+      mkNodes = count: nameFormat: wgIpFormat: imports:
+        lib.foldl' lib.recursiveUpdate {} (
+          lib.genList (mkNodeN nameFormat wgIpFormat imports) count
+        );
+
       eu-central-1.aws.region = "eu-central-1";
       us-east-1.aws.region = "us-east-1";
       ap-southeast-2.aws.region = "ap-southeast-2";
@@ -22,50 +50,17 @@ in {
 
       volume = size: {aws.instance.root_block_device.volume_size = size;};
 
-      inherit (nixosModules) nomad-client nomad-master;
-
-      wireguardIps = {
-        eu-central-1 = "10.200.0";
-        us-east-1 = "10.200.1";
-        ap-southeast-2 = "10.200.2";
-      };
-
-      wireguard = region: suffix: {
-        networking.wireguard.interfaces.wg0.ips = ["${wireguardIps.${region}}.${toString suffix}/32"];
-      };
-
-      mkNode = num: region: imports: let
-        shortRegion = lib.substring 0 2 region.aws.region;
-        suffix = lib.fixedWidthNumber 2 num;
-        wg = wireguard region.aws.region (num + 1);
-      in {
-        "client-${shortRegion}-${suffix}" = {imports = [region (volume 60) wg] ++ imports;};
-      };
-
-      mkNodes = count: region: imports:
-        lib.foldl' lib.recursiveUpdate {} (
-          lib.genList (num: mkNode (num + 1) region imports) count
-        );
-
-      delete.aws.instance.count = 0;
+      inherit (nixosModules) common aws-ec2 nomad-client nomad-server;
     in (
       {
-        meta.nixpkgs = import inputs.nixpkgs {
-          system = "x86_64-linux";
-        };
-
-        defaults.imports = [
-          nixosModules.common
-          nixosModules.aws-ec2
-          nixos-23-05
-        ];
-
-        master = {imports = [eu-central-1 r5-xlarge (volume 100) nomad-master (wireguard "eu-central-1" 1)];};
+        meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
+        defaults.imports = [aws-ec2 common nixos-23-05];
       }
-      // (mkNodes 1 ap-southeast-2 [c5-2xlarge nomad-client])
-      // (mkNodes 1 us-east-1 [c5-2xlarge nomad-client])
-      // (mkNodes 1 eu-central-1 [c5-2xlarge nomad-client])
-      // (mkNode 18 eu-central-1 [c5-4xlarge nomad-client])
+      // (mkNode "leader" "10.200.0.1" [eu-central-1 r5-xlarge nomad-server])
+      // (mkNode "client-eu-18" "10.200.1.18" [eu-central-1 c5-4xlarge nomad-client])
+      // (mkNodes 1 "client-eu-%02d" "10.200.1.%d" [eu-central-1 c5-2xlarge nomad-client])
+      // (mkNodes 1 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2 c5-2xlarge nomad-client])
+      // (mkNodes 1 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client])
     );
   };
 }
