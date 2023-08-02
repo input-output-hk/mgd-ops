@@ -1,5 +1,9 @@
-{self, ...}: {
-  flake.nixosModules.nomad-client = {
+{
+  self,
+  moduleWithSystem,
+  ...
+} @ flake: {
+  flake.nixosModules.nomad-client = moduleWithSystem ({self'}: {
     nodes,
     config,
     lib,
@@ -11,9 +15,11 @@
     services.nomad = {
       enable = true;
       enableDocker = false;
+      package = self'.packages.nomad;
       settings = {
         client = {
           enabled = true;
+          network_interface = "wg0";
           server_join = {
             retry_join = ["10.200.0.1"];
             retry_max = 3;
@@ -34,11 +40,11 @@
         {
           name = "nomad-master";
           allowedIPs = ["10.200.0.1/32"];
-          endpoint = "3.72.83.208:51820";
+          endpoint = "master.${flake.config.flake.cluster.domain}:51820";
           publicKey = lib.fileContents "${self}/secrets/wireguard_master.txt";
           persistentKeepalive = 25;
         }
       ];
     };
-  };
+  });
 }

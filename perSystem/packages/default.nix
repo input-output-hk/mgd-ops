@@ -3,6 +3,7 @@
     ./zfs-kexec-image
     ./pre-push
     ./go-discover
+    ./nomad
   ];
 
   perSystem = {

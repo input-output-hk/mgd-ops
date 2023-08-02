@@ -15,15 +15,18 @@
     };
 
     networking = {
-      nat = {
-        enable = true;
-        externalInterface = "ens5";
-        internalInterfaces = ["wg0"];
-      };
+      # nat = {
+      #   enable = true;
+      #   externalInterface = "ens5";
+      #   internalInterfaces = ["wg0"];
+      # };
 
       firewall = {
         allowedUDPPorts = [config.networking.wireguard.interfaces.wg0.listenPort];
-        interfaces.wg0.allowedTCPPorts = [22];
+        interfaces.wg0 = {
+          allowedTCPPorts = [22 4647 4646];
+          allowedUDPPorts = [4648];
+        };
       };
 
       wireguard = {

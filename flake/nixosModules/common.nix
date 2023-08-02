@@ -28,8 +28,7 @@ parts @ {
       hostName = name;
       firewall = {
         enable = true;
-        allowedTCPPorts = [22 4647 4646];
-        allowedUDPPorts = [4648];
+        allowedTCPPorts = [22];
       };
     };
 

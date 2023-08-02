@@ -1,5 +1,9 @@
-{self, ...}: {
-  flake.nixosModules.nomad-master = {
+{
+  self,
+  moduleWithSystem,
+  ...
+}: {
+  flake.nixosModules.nomad-master = moduleWithSystem ({self'}: {
     lib,
     config,
     name,
@@ -12,7 +16,13 @@
     services.nomad = {
       enable = true;
       enableDocker = false;
+      package = self'.packages.nomad;
       settings = {
+        advertise = {
+          http = "10.200.0.1";
+          rpc = "10.200.0.1";
+          serf = "10.200.0.1";
+        };
         server = {
           enabled = true;
           bootstrap_expect = 1;
@@ -28,5 +38,5 @@
         persistentKeepalive = 25;
       }) (removeAttrs nodes [name]);
     };
-  };
+  });
 }
