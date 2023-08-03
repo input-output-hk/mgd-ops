@@ -76,4 +76,13 @@ terraform *ARGS:
   nix build .#terraform.cluster --out-link cluster.tf.json
   terraform {{ARGS}}
 
+show-nameservers:
+  #!/usr/bin/env bash
+  DOMAIN=$(nix eval --raw '.#cluster.domain')
+  ID=$(aws route53 list-hosted-zones-by-name | jq --arg DOMAIN "$DOMAIN" -r '.HostedZones[] | select(.Name | startswith($DOMAIN)).Id')
+  REC=$(aws route53 list-resource-record-sets --hosted-zone-id "$ID" | jq -r '.ResourceRecordSets[] | select(.Type == "NS").ResourceRecords[].Value')
+  echo "Nameservers for the following hosted zone need to be added to the NS record of the delegating authority"
+  echo "Nameservers for domain: $DOMAIN (hosted zone id: $ID) are:"
+  echo "$REC"
+
 alias tf := terraform

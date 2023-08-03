@@ -5,3 +5,4 @@
 /cloudFormation
 /.terraform
 /.terraform*
+/cluster.tf.json

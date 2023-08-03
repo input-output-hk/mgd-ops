@@ -42,7 +42,7 @@ in {
 
           backend = {
             s3 = {
-              bucket = "cardano-perf-terraform";
+              bucket = cluster.bucketName;
               key = "terraform";
               region = cluster.region;
               dynamodb_table = "terraform";
