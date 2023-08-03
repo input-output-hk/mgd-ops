@@ -52,7 +52,7 @@ in {
       volume = size: {aws.instance.root_block_device.volume_size = size;};
 
       inherit (nixosModules) common nomad-client nomad-server;
-    in (
+    in
       {
         meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
         defaults.imports = [common nixos-23-05];
@@ -61,7 +61,6 @@ in {
       // (mkNode "client-eu-18" "10.200.1.18" [eu-central-1 c5-4xlarge nomad-client])
       // (mkNodes 1 "client-eu-%02d" "10.200.1.%d" [eu-central-1 c5-2xlarge nomad-client])
       // (mkNodes 1 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2 c5-2xlarge nomad-client])
-      // (mkNodes 1 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client])
-    );
+      // (mkNodes 1 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client]);
   };
 }

@@ -9,11 +9,8 @@ parts @ {
     self',
   }: {
     name,
-    options,
     config,
     pkgs,
-    lib,
-    nodes,
     ...
   }: {
     imports = [

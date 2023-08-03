@@ -21,7 +21,7 @@
         };
 
         nodes = {
-          leader = {config, ...}: {
+          leader = {...}: {
             imports = [nomad-server];
             networking.firewall.allowedTCPPorts = [];
           };
