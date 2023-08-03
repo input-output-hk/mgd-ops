@@ -23,6 +23,8 @@ flake: {
             self'.packages.terraform
             awscli2
             sops
+            deadnix
+            statix
           ])
           ++ (with inputs'; [
             colmena.packages.colmena

@@ -86,3 +86,7 @@ show-nameservers:
   echo "$REC"
 
 alias tf := terraform
+
+lint:
+  deadnix -f
+  statix check

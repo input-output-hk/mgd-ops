@@ -3,6 +3,8 @@
     checks.lint =
       pkgs.runCommand "lint" {
         nativeBuildInputs = with pkgs; [
+          just
+          nushell
           statix
           deadnix
         ];
@@ -10,11 +12,7 @@
         set -euo pipefail
 
         cd ${self}
-
-        deadnix -f
-
-        statix check
-
+        just lint
         touch $out
       '';
   };
