@@ -6,21 +6,25 @@
   flake.nixosModules.nomad-client = moduleWithSystem ({self'}: {
     nodes,
     config,
+    pkgs,
     lib,
     ...
   }: let
     leaderIps = nodes.leader.config.networking.wireguard.interfaces.wg0.ips;
     leaderIp = lib.removeSuffix "/32" (builtins.elemAt leaderIps 0);
   in {
-    deployment.tags = ["nomad-client"];
     aws.instance.tags.Nomad = "cardano-perf-client";
 
     services.nomad = {
       enable = true;
       enableDocker = false;
+      dropPrivileges = false;
       package = self'.packages.nomad;
+      extraPackages = [pkgs.cni-plugins pkgs.nix];
 
       settings = {
+        datacenter = config.aws.region;
+
         client = {
           enabled = true;
           network_interface = "wg0";

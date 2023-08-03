@@ -24,7 +24,7 @@
       firewall = {
         allowedUDPPorts = [config.networking.wireguard.interfaces.wg0.listenPort];
         interfaces.wg0 = {
-          allowedTCPPorts = [22 4647 4646];
+          allowedTCPPorts = [22 80 443 4646 4647];
           allowedUDPPorts = [4648];
         };
       };
@@ -35,6 +35,14 @@
         interfaces.wg0 = {
           privateKeyFile = config.sops.secrets.wg.path;
           listenPort = 51820;
+          peers = [
+            {
+              name = "fmaste";
+              allowedIPs = ["10.200.100.1/32"];
+              publicKey = "Kb5WEHzkEpHVgD5OasHT6XsmZknGraXH50XbQ8Qdcys=";
+              persistentKeepalive = 25;
+            }
+          ];
         };
       };
     };

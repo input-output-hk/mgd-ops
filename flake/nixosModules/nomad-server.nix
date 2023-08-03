@@ -6,17 +6,18 @@
   flake.nixosModules.nomad-server = moduleWithSystem ({self'}: {
     lib,
     config,
+    pkgs,
     name,
     nodes,
     ...
   }: {
-    deployment.tags = ["nomad-server"];
     aws.instance.tags.Nomad = "cardano-perf-server";
 
     services.nomad = {
       enable = true;
       enableDocker = false;
       package = self'.packages.nomad;
+      extraPackages = [pkgs.cni-plugins pkgs.nix];
 
       settings = {
         advertise = let

@@ -10,15 +10,16 @@ in {
     nixosConfigurations = (inputs.colmena.lib.makeHive config.flake.colmena).nodes;
 
     colmena = let
-      mkNode = name: wgIp: imports:
-      # shortRegion = lib.substring 0 2 region.aws.region;
-      # wg = wireguard region.aws.region counter;
-      {
+      mkNode = name: wgIp: imports: {
         "${name}" = {
           imports =
             [
               (volume 60)
-              {networking.wireguard.interfaces.wg0.ips = ["${wgIp}/32"];}
+              {
+                networking.wireguard.interfaces.wg0.ips = ["${wgIp}/32"];
+                deployment.targetHost = name;
+                deployment.tags = lib.optional (lib.hasPrefix "client-" name) "nomad-client";
+              }
             ]
             ++ imports;
         };
@@ -50,11 +51,11 @@ in {
 
       volume = size: {aws.instance.root_block_device.volume_size = size;};
 
-      inherit (nixosModules) common aws-ec2 nomad-client nomad-server;
+      inherit (nixosModules) common nomad-client nomad-server;
     in (
       {
         meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
-        defaults.imports = [aws-ec2 common nixos-23-05];
+        defaults.imports = [common nixos-23-05];
       }
       // (mkNode "leader" "10.200.0.1" [eu-central-1 r5-xlarge nomad-server])
       // (mkNode "client-eu-18" "10.200.1.18" [eu-central-1 c5-4xlarge nomad-client])

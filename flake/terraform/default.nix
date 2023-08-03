@@ -214,6 +214,28 @@ in {
                   self = true;
                 }
                 {
+                  description = "Allow Rsync";
+                  from_port = 32000;
+                  to_port = 32000;
+                  protocol = "tcp";
+                  cidr_blocks = ["0.0.0.0/0"];
+                  ipv6_cidr_blocks = ["::/0"];
+                  prefix_list_ids = [];
+                  security_groups = [];
+                  self = true;
+                }
+                {
+                  description = "Allow Cardano";
+                  from_port = 30000;
+                  to_port = 30052;
+                  protocol = "tcp";
+                  cidr_blocks = ["0.0.0.0/0"];
+                  ipv6_cidr_blocks = ["::/0"];
+                  prefix_list_ids = [];
+                  security_groups = [];
+                  self = true;
+                }
+                {
                   description = "Allow Wireguard";
                   from_port = 51820;
                   to_port = 51820;

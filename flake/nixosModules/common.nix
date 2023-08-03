@@ -18,17 +18,22 @@ parts @ {
   }: {
     imports = [
       parts.config.flake.nixosModules.wireguard
+      parts.config.flake.nixosModules.aws-ec2
       inputs.sops-nix.nixosModules.default
       inputs.auth-keys-hub.nixosModules.auth-keys-hub
     ];
-
-    deployment.targetHost = name;
 
     networking = {
       hostName = name;
       firewall = {
         enable = true;
-        allowedTCPPorts = [22];
+        allowedTCPPorts = [22 80 443 32000];
+        allowedTCPPortRanges = [
+          {
+            from = 30000;
+            to = 30052;
+          }
+        ];
       };
     };
 
@@ -130,6 +135,8 @@ parts @ {
         experimental-features = ["nix-command" "flakes" "cgroups"];
         auto-optimise-store = true;
         system-features = ["recursive-nix" "nixos-test"];
+        substituters = ["https://cache.iog.io"];
+        trusted-public-keys = ["hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="];
         builders-use-substitutes = true;
         show-trace = true;
         keep-outputs = true;
