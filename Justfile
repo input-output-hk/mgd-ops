@@ -42,8 +42,8 @@ save-bootstrap-ssh-key:
 
 cf STACKNAME:
   mkdir cloudFormation
-  nix eval --json '.#cloudFormation.{{STACKNAME}}' | jq | save --force 'cloudFormation/{{STACKNAME}}.json'
-  rain deploy --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
+  nix eval --json '.#cloudFormation.{{STACKNAME}}' | from json | save --force 'cloudFormation/{{STACKNAME}}.json'
+  rain deploy --debug --termination-protection --yes ./cloudFormation/{{STACKNAME}}.json
 
 wg-genkey KMS HOSTNAME:
   #!/usr/bin/env nu
@@ -64,12 +64,9 @@ wg-genkey KMS HOSTNAME:
 
 wg-genkeys:
   #!/usr/bin/env nu
-  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   let kms = (nix eval --raw '.#cluster.kms')
+  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   for node in $nodes { just wg-genkey $kms $node }
-
-bootstrap HOSTNAME:
-  nix run '.#bootstrap' -- --verbose --flake '.#{{HOSTNAME}}'
 
 terraform *ARGS:
   rm --force cluster.tf.json
@@ -77,13 +74,15 @@ terraform *ARGS:
   terraform {{ARGS}}
 
 show-nameservers:
-  #!/usr/bin/env bash
-  DOMAIN=$(nix eval --raw '.#cluster.domain')
-  ID=$(aws route53 list-hosted-zones-by-name | jq --arg DOMAIN "$DOMAIN" -r '.HostedZones[] | select(.Name | startswith($DOMAIN)).Id')
-  REC=$(aws route53 list-resource-record-sets --hosted-zone-id "$ID" | jq -r '.ResourceRecordSets[] | select(.Type == "NS").ResourceRecords[].Value')
-  echo "Nameservers for the following hosted zone need to be added to the NS record of the delegating authority"
-  echo "Nameservers for domain: $DOMAIN (hosted zone id: $ID) are:"
-  echo "$REC"
+  #!/usr/bin/env nu
+  let domain = (nix eval --raw '.#cluster.domain')
+  let zones = (aws route53 list-hosted-zones-by-name | from json).HostedZones
+  let id = ($zones | where Name == $"($domain).").Id.0
+  let sets = (aws route53 list-resource-record-sets --hosted-zone-id $id | from json).ResourceRecordSets
+  let ns = ($sets | where Type == "NS").ResourceRecords.0.Value
+  print "Nameservers for the following hosted zone need to be added to the NS record of the delegating authority"
+  print $"Nameservers for domain: ($domain) \(hosted zone id: ($id)) are:"
+  print ($ns | to text)
 
 alias tf := terraform
 
