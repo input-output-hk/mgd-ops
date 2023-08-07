@@ -1,6 +1,7 @@
 {self, ...}: {
   flake.nixosModules.wireguard = {
     name,
+    lib,
     config,
     ...
   }: {
@@ -25,7 +26,7 @@
         enable = true;
 
         interfaces.wg0 = {
-          privateKeyFile = config.sops.secrets.wg.path;
+          privateKeyFile = lib.mkDefault config.sops.secrets.wg.path;
           listenPort = 51820;
           peers = [
             {

@@ -11,6 +11,7 @@ parts @ {
     name,
     config,
     pkgs,
+    lib,
     ...
   }: {
     imports = [
@@ -46,7 +47,7 @@ parts @ {
 
     # On boot, SOPS runs in stage 2 without networking, this prevents KMS from
     # working, so we repeat the activation script until decryption succeeds.
-    systemd.services.sops-boot-fix = {
+    systemd.services.sops-boot-fix = lib.mkIf (config.system.activationScripts ? setupSecrets) {
       wantedBy = ["multi-user.target"];
       after = ["network-online.target"];
 

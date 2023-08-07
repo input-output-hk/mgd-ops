@@ -10,7 +10,7 @@
     lib,
     ...
   }: let
-    leaderIps = nodes.leader.config.networking.wireguard.interfaces.wg0.ips;
+    leaderIps = nodes.leader.networking.wireguard.interfaces.wg0.ips;
     leaderIp = lib.removeSuffix "/32" (builtins.elemAt leaderIps 0);
   in {
     aws.instance.tags.Nomad = "cardano-perf-client";
@@ -46,7 +46,6 @@
     };
 
     networking.wireguard.interfaces.wg0 = {
-      privateKeyFile = config.sops.secrets.wg.path;
       peers = [
         {
           name = "leader";
