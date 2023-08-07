@@ -33,6 +33,12 @@
           enabled = true;
           bootstrap_expect = 1;
         };
+
+        ui = {
+          enabled = true;
+
+          label.text = "Cardano Performance";
+        };
       };
     };
 
