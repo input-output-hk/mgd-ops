@@ -21,14 +21,13 @@
     terranix.url = "github:terranix/terranix";
   };
 
-  outputs = inputs:
-    inputs.flake-parts.lib.mkFlake {inherit inputs;} {
-      imports = [
-        ./flake
-        ./perSystem
-      ];
-
+  outputs = inputs: let
+    inherit ((import ./flake/lib.nix {inherit inputs;}).flake.lib) recursiveImports;
+  in
+    inputs.flake-parts.lib.mkFlake {inherit inputs;}
+    {
       systems = ["x86_64-linux"];
+      imports = recursiveImports [./flake ./perSystem];
     };
 
   nixConfig = {

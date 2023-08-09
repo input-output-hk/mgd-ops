@@ -36,7 +36,6 @@ parts @ {
     };
 
     time.timeZone = "UTC";
-    programs.sysdig.enable = true;
     i18n.supportedLocales = ["en_US.UTF-8/UTF-8" "en_US/ISO-8859-1"];
 
     boot = {
@@ -72,36 +71,62 @@ parts @ {
     };
 
     environment.systemPackages = with pkgs; [
+      awscli2
       bat
       bind
       di
       dnsutils
       fd
       file
+      git
+      glances
+      graphviz
+      helix
       htop
+      iptables
       jq
       lsof
-      ncdu
-      ripgrep
-      tree
+      mosh
       nano
-      tcpdump
-      glances
-      gitMinimal
+      ncdu
+      pciutils
+      ripgrep
+      rsync
       self'.packages.go-discover
       sops
-      awscli2
-      pciutils
-      helix
+      sysstat
+      tcpdump
+      tig
+      tree
+      cloud-utils
+      parted
     ];
 
-    programs.tmux = {
-      enable = true;
-      aggressiveResize = true;
-      clock24 = true;
-      escapeTime = 0;
-      historyLimit = 10000;
-      newSession = true;
+    programs = {
+      sysdig.enable = true;
+      mosh.enable = true;
+
+      tmux = {
+        enable = true;
+        aggressiveResize = true;
+        clock24 = true;
+        escapeTime = 0;
+        historyLimit = 10000;
+        newSession = true;
+      };
+
+      auth-keys-hub = {
+        enable = true;
+        package = inputs'.auth-keys-hub.packages.auth-keys-hub;
+        github = {
+          teams = [
+            "input-output-hk/performance-tracing"
+            "input-output-hk/node-sre"
+          ];
+
+          tokenFile = config.sops.secrets.github-token.path;
+        };
+      };
     };
 
     sops.defaultSopsFormat = "binary";
@@ -111,26 +136,23 @@ parts @ {
       inherit (config.programs.auth-keys-hub) group;
     };
 
-    programs.auth-keys-hub = {
-      enable = true;
-      package = inputs'.auth-keys-hub.packages.auth-keys-hub;
-      github = {
-        teams = [
-          "input-output-hk/performance-tracing"
-          "input-output-hk/node-sre"
-        ];
-        tokenFile = config.sops.secrets.github-token.path;
-      };
-    };
-
     services = {
       chrony.enable = true;
+      cron.enable = true;
       fail2ban.enable = true;
       openssh = {
         enable = true;
-        settings.PasswordAuthentication = false;
+        settings = {
+          PasswordAuthentication = false;
+          RequiredRSASize = 2048;
+          PubkeyAcceptedAlgorithms = "-*nist*";
+        };
       };
     };
+
+    system.extraSystemBuilderCmds = ''
+      ln -sv ${pkgs.path} $out/nixpkgs
+    '';
 
     nix = {
       registry.nixpkgs.flake = inputs.nixpkgs;

@@ -1,17 +1,11 @@
-{
-  self,
-  moduleWithSystem,
-  ...
-}: {
+{moduleWithSystem, ...}: {
   flake.nixosModules.nomad-server = moduleWithSystem ({self'}: {
     lib,
     config,
     pkgs,
-    name,
-    nodes,
     ...
   }: {
-    aws.instance.tags.Nomad = "cardano-perf-server";
+    aws.instance.tags.Role = "cardano-perf-server";
 
     services.nomad = {
       enable = true;
@@ -36,19 +30,9 @@
 
         ui = {
           enabled = true;
-
           label.text = "Cardano Performance";
         };
       };
-    };
-
-    networking.wireguard.interfaces.wg0 = {
-      peers = lib.mapAttrsToList (nodeName: node: {
-        name = nodeName;
-        allowedIPs = node.config.networking.wireguard.interfaces.wg0.ips;
-        publicKey = lib.fileContents "${self}/secrets/wireguard_${nodeName}.txt";
-        persistentKeepalive = 25;
-      }) (removeAttrs nodes [name]);
     };
   });
 }

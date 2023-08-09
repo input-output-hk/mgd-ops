@@ -7,12 +7,12 @@
     ...
   }:
     lib.optionalAttrs (system == "x86_64-linux") {
-      checks.test = inputs.nixpkgs.lib.nixos.runTest ({nodes, ...}: let
+      checks.cluster = inputs.nixpkgs.lib.nixos.runTest ({nodes, ...}: let
         inherit (parts.config.flake.nixosModules) common nomad-server nomad-client;
 
         snakeoil-keys = import "${inputs.nixpkgs}/nixos/tests/wireguard/snakeoil-keys.nix";
       in {
-        name = "test";
+        name = "cluster";
 
         hostPkgs = pkgs;
 

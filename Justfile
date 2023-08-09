@@ -19,6 +19,11 @@ ssh HOSTNAME *ARGS:
 
   ssh -F .ssh_config {{HOSTNAME}} {{ARGS}}
 
+ssh-for-each *ARGS:
+  #!/usr/bin/env nu
+  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
+  for node in $nodes { just ssh $node {{ARGS}} }
+
 bootstrap-ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
   if not ('.ssh_config' | path exists) {
@@ -89,3 +94,8 @@ alias tf := terraform
 lint:
   deadnix -f
   statix check
+
+nomad-ui:
+  #!/usr/bin/env nu
+  print "Nomad will be available at http://127.0.0.1:4646"
+  ssh -F .ssh_config -N -L 4646:leader:4646 leader

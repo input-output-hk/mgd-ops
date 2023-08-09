@@ -76,7 +76,7 @@ in {
 
             root_block_device = {
               volume_type = "gp3";
-              volume_size = 40;
+              inherit (node.aws.instance.root_block_device) volume_size;
               iops = 3000;
               delete_on_termination = true;
             };
@@ -184,6 +184,20 @@ in {
             instance_id = "\${aws_instance.${name}[0].id}";
             allocation_id = "\${aws_eip.${name}[0].id}";
           });
+
+          aws_ebs_volume.deployer_volume = {
+            availability_zone = "\${aws_instance.deployer[0].availability_zone}";
+            type = "gp3";
+            iops = 3000;
+            throughput = 125; # MB/s
+            size = 12000;
+          };
+
+          aws_volume_attachment.deployer_volume = {
+            device_name = "/dev/sdh";
+            volume_id = "\${ aws_ebs_volume.deployer_volume.id }";
+            instance_id = "\${aws_instance.deployer[0].id}";
+          };
 
           # To remove or rename a security group, keep it here while removing
           # the reference from the instance. Then apply, and if that succeeds,
