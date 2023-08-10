@@ -22,7 +22,7 @@ ssh HOSTNAME *ARGS:
 ssh-for-each *ARGS:
   #!/usr/bin/env nu
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
-  for node in $nodes { just ssh $node {{ARGS}} }
+  $nodes | par-each {|node| just ssh -q $node {{ARGS}} }
 
 bootstrap-ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
