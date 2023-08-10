@@ -57,6 +57,9 @@
       vbell off
     '';
 
-    nix.nrBuildUsers = 36;
+    nix = {
+      nrBuildUsers = 36;
+      settings.system-features = ["recursive-nix" "nixos-test" "benchmark"];
+    };
   };
 }
