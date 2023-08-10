@@ -32,6 +32,11 @@
           enabled = true;
           label.text = "Cardano Performance";
         };
+
+        limits = {
+          http_max_conns_per_client = 200;
+          rpc_max_conns_per_client = 200;
+        };
       };
     };
   });
