@@ -40,7 +40,7 @@ in {
     ap-southeast-2.aws.region = "ap-southeast-2";
 
     r5-xlarge.aws.instance.instance_type = "r5.xlarge";
-    c5-4xlarge.aws.instance.instance_type = "c5.4xlarge";
+    m5-4xlarge.aws.instance.instance_type = "m5.4xlarge";
     c5-2xlarge.aws.instance.instance_type = "c5.2xlarge";
     c5-9xlarge.aws.instance.instance_type = "c5.9xlarge";
 
@@ -56,8 +56,8 @@ in {
     }
     // (mkNode "leader" "10.200.0.1" [eu-central-1 r5-xlarge nomad-server (ebs 40)])
     // (mkNode "deployer" "10.200.0.2" [eu-central-1 c5-9xlarge deployer (ebs 2000)])
-    // (mkNode "client-eu-18" "10.200.1.18" [eu-central-1 c5-4xlarge nomad-client (ebs 40)])
-    // (mkNodes 1 "client-eu-%02d" "10.200.1.%d" [eu-central-1 c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 1 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2 c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 1 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client (ebs 40)]);
+    // (mkNode "client-eu-19" "10.200.1.19" [eu-central-1 m5-4xlarge nomad-client (ebs 40)])
+    // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [eu-central-1 c5-2xlarge nomad-client (ebs 40)])
+    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2 c5-2xlarge nomad-client (ebs 40)])
+    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client (ebs 40)]);
 }
