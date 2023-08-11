@@ -11,23 +11,19 @@ flake: {
       inherit (flake.config.flake) cluster;
     in
       pkgs.mkShell {
-        packages =
-          (with pkgs; [
-            just
-            age
-            statix
-            wireguard-tools
-            nushell
-            self'.packages.rain
-            self'.packages.terraform
-            awscli2
-            sops
-            deadnix
-            statix
-          ])
-          ++ (with inputs'; [
-            colmena.packages.colmena
-          ]);
+        packages = with pkgs; [
+          age
+          awscli2
+          deadnix
+          inputs'.colmena.packages.colmena
+          just
+          nushell
+          self'.packages.rain
+          self'.packages.terraform
+          sops
+          statix
+          wireguard-tools
+        ];
 
         shellHook = ''
           ln -sf ${lib.getExe self'.packages.pre-push} .git/hooks/
