@@ -251,6 +251,12 @@ in {
                     to_port = 51820;
                     protocol = "udp";
                   })
+                  (mkRule {
+                    description = "Allow ICMP";
+                    from_port = 8;
+                    to_port = 0;
+                    protocol = "icmp";
+                  })
                 ];
 
                 egress = [
