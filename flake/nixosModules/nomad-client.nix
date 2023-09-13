@@ -35,6 +35,21 @@
           client_auto_join = false;
           auto_advertise = false;
         };
+
+        plugin = [
+          {
+            raw_exec = [
+              {
+                config = [
+                  {
+                    enabled = true;
+                    no_cgroups = true;
+                  }
+                ];
+              }
+            ];
+          }
+        ];
       };
     };
   });
