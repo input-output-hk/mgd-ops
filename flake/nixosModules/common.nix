@@ -156,8 +156,8 @@ parts @ {
 
     nix = {
       registry.nixpkgs.flake = inputs.nixpkgs;
-      optimise.automatic = true;
-      gc.automatic = true;
+      optimise.automatic = false;
+      gc.automatic = false;
 
       settings = {
         max-jobs = "auto";
