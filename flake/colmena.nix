@@ -45,8 +45,15 @@ in {
       aws.instance.availability_zone = "eu-central-1c";
     };
 
-    us-east-1.aws.region = "us-east-1";
-    ap-southeast-2.aws.region = "ap-southeast-2";
+    us-east-1d = {
+      aws.region = "us-east-1";
+      aws.instance.availability_zone = "us-east-1d";
+    };
+
+    ap-southeast-2b = {
+      aws.region = "ap-southeast-2";
+      aws.instance.availability_zone = "ap-southeast-2b";
+    };
 
     r5-xlarge.aws.instance.instance_type = "r5.xlarge";
     m5-4xlarge.aws.instance.instance_type = "m5.4xlarge";
@@ -67,6 +74,6 @@ in {
     // (mkNode "deployer" "10.200.0.2" [eu-central-1b c5-9xlarge deployer (ebs 2000)])
     // (mkNode "explorer" "10.200.1.19" [eu-central-1b m5-4xlarge nomad-client (ebs 40)])
     // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [eu-central-1b c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2 c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [us-east-1 c5-2xlarge nomad-client (ebs 40)]);
+    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2b c5-2xlarge nomad-client (ebs 40)])
+    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [us-east-1d c5-2xlarge nomad-client (ebs 40)]);
 }
