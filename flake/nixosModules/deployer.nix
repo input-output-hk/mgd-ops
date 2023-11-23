@@ -11,6 +11,14 @@
 
     fileSystems."/".autoResize = true;
 
+    swapDevices = [
+      {
+        device = "/home/swapfile";
+        size = 16 * 1024;
+        discardPolicy = "both";
+      }
+    ];
+
     systemd.services.mkfs-dev-sdh.after = ["network-online.target"];
 
     environment.systemPackages = with pkgs; [
