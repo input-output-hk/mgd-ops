@@ -18,8 +18,8 @@ flake: {
           inputs'.colmena.packages.colmena
           just
           nushell
-          self'.packages.rain
-          self'.packages.terraform
+          rain
+          self'.packages.opentofu
           sops
           statix
           wireguard-tools

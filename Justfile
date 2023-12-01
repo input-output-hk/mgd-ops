@@ -13,7 +13,7 @@ apply *ARGS:
 ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
   if not ('.ssh_config' | path exists) {
-    print "Please run terraform first to create the .ssh_config file"
+    print "Please run tofu first to create the .ssh_config file"
     exit 1
   }
 
@@ -27,7 +27,7 @@ ssh-for-each *ARGS:
 bootstrap-ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
   if not ('.ssh_config' | path exists) {
-    print "Please run terraform first to create the .ssh_config file"
+    print "Please run tofu first to create the .ssh_config file"
     exit 1
   }
 
@@ -39,8 +39,8 @@ bootstrap-ssh HOSTNAME *ARGS:
 
 save-bootstrap-ssh-key:
   #!/usr/bin/env nu
-  print "Retrieving ssh key from terraform..."
-  let tf = (terraform show -json | from json)
+  print "Retrieving ssh key from tofu..."
+  let tf = (tofu show -json | from json)
   let key = ($tf.values.root_module.resources | where type == tls_private_key and name == bootstrap)
   $key.values.private_key_openssh | save .ssh_key
   chmod 0600 .ssh_key
@@ -73,10 +73,10 @@ wg-genkeys:
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   for node in $nodes { just wg-genkey $kms $node }
 
-terraform *ARGS:
+tf *ARGS:
   rm --force cluster.tf.json
   nix build .#terraform.cluster --out-link cluster.tf.json
-  terraform {{ARGS}}
+  tofu {{ARGS}}
 
 show-nameservers:
   #!/usr/bin/env nu
@@ -88,8 +88,6 @@ show-nameservers:
   print "Nameservers for the following hosted zone need to be added to the NS record of the delegating authority"
   print $"Nameservers for domain: ($domain) \(hosted zone id: ($id)) are:"
   print ($ns | to text)
-
-alias tf := terraform
 
 lint:
   deadnix -f

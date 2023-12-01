@@ -15,7 +15,7 @@
         sha256 = "sha256-VYoQz0mH4s4EB10CsgXDG+rSj3HcqbNYKuOvb0AMb5Q=";
       };
 
-      vendorSha256 = "sha256-KYFbuhx49olmTYQtIdlLN8VsMEQPVts+UW9jBlkAiN8=";
+      vendorHash = "sha256-KYFbuhx49olmTYQtIdlLN8VsMEQPVts+UW9jBlkAiN8=";
 
       subPackages = ["cmd/discover"];
 

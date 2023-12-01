@@ -6,7 +6,7 @@
   }: {
     packages.nomad = pkgs.buildGoModule rec {
       pname = "nomad";
-      version = "1.6.1";
+      version = "1.6.3";
 
       subPackages = ["."];
 
@@ -14,10 +14,10 @@
         owner = "hashicorp";
         repo = pname;
         rev = "release/${version}";
-        sha256 = "sha256-lBEpZdho896Nulro/d2z4KAVAt2lZZqmlcAxIOkR0MA=";
+        sha256 = "sha256-yOlR8lka3TbCNo7N0xQNzrNe6H7t7EabR8oVevFSHd0=";
       };
 
-      vendorSha256 = "sha256-Y3O7ADzZPlLWFbXSYBcI6b5MAhMD0UnkhQxO9VJMpOY=";
+      vendorHash = "sha256-gXoheW6Ww9Iu4utKNHweP2blzhWid+Q9Tp0ZgCmBAVg=";
 
       patches = [
         ./nomad-exec-nix-driver.patch

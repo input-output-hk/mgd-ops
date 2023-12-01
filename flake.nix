@@ -9,16 +9,13 @@
     disko.url = "github:nix-community/disko";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.11";
     sops-nix.url = "github:Mic92/sops-nix";
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
-    nixos-images.url = "github:nix-community/nixos-images";
-    nixos-images.inputs.nixos-unstable.follows = "nixpkgs";
-    impermanence.url = "github:nix-community/impermanence";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    terraform-providers.url = "github:nix-community/nixpkgs-terraform-providers-bin";
     terranix.url = "github:terranix/terranix";
+    opentofu-registry.url = "github:opentofu/registry-stable";
+    opentofu-registry.flake = false;
   };
 
   outputs = inputs: let
