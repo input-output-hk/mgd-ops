@@ -14,7 +14,7 @@
     swapDevices = [
       {
         device = "/home/swapfile";
-        size = 16 * 1024;
+        size = 32 * 1024;
         discardPolicy = "both";
       }
     ];
