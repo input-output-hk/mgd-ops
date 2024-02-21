@@ -150,6 +150,10 @@ parts @ {
       };
     };
 
+    users.users.root.openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBbtFrxN6W8MK2e0fDVHVrcgC5ILBitN63wvsIPdUEdB pt-team@perf"
+    ];
+
     system.extraSystemBuilderCmds = ''
       ln -sv ${pkgs.path} $out/nixpkgs
     '';
