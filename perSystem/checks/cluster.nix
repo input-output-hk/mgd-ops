@@ -1,12 +1,13 @@
 {inputs, ...} @ parts: {
   perSystem = {
     pkgs,
-    system,
     lib,
     config,
     ...
   }:
-    lib.optionalAttrs (system == "x86_64-linux") {
+  # lib.optionalAttrs (system == "x86_64-linux") {
+  # Disable this test for now, it doesn't actually work because of AWS/SOPS
+    lib.optionalAttrs false {
       checks.cluster = inputs.nixpkgs.lib.nixos.runTest ({nodes, ...}: let
         inherit (parts.config.flake.nixosModules) common nomad-server nomad-client;
 

@@ -18,5 +18,13 @@
 
     domain = "perf.aws.iohkdev.io";
     bucketName = "cardano-perf-terraform";
+
+    generic = {
+      organization = "iog";
+      tribe = "coretech";
+      function = "cardano-perf";
+      repo = "https://github.com/input-output-hk/cardano-perf";
+      environment = "generic";
+    };
   };
 }

@@ -38,33 +38,47 @@ in {
     eu-central-1b.aws = {
       region = "eu-central-1";
       instance.availability_zone = "eu-central-1b";
+      instance.count = 1;
     };
 
-    eu-central-1c = {
-      aws.region = "eu-central-1";
-      aws.instance.availability_zone = "eu-central-1c";
+    eu-central-1c.aws = {
+      region = "eu-central-1";
+      instance.availability_zone = "eu-central-1c";
+      instance.count = 1;
     };
 
-    us-east-1d = {
-      aws.region = "us-east-1";
-      aws.instance.availability_zone = "us-east-1d";
+    us-east-1d.aws = {
+      region = "us-east-1";
+      instance.availability_zone = "us-east-1d";
+      instance.count = 1;
     };
 
-    ap-southeast-2b = {
-      aws.region = "ap-southeast-2";
-      aws.instance.availability_zone = "ap-southeast-2b";
+    ap-southeast-2b.aws = {
+      region = "ap-southeast-2";
+      instance.availability_zone = "ap-southeast-2b";
+      instance.count = 1;
     };
 
-    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
-    m5-4xlarge.aws.instance.instance_type = "m5.4xlarge";
     c5-2xlarge.aws.instance.instance_type = "c5.2xlarge";
     c5-9xlarge.aws.instance.instance_type = "c5.9xlarge";
+    c5d-24xlarge.aws.instance.instance_type = "c5d.24xlarge";
+    m5-4xlarge.aws.instance.instance_type = "m5.4xlarge";
+    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
 
     nixos-23-05.system.stateVersion = "23.05";
 
     ebs = size: {aws.instance.root_block_device.volume_size = lib.mkDefault size;};
 
-    inherit (nixosModules) common nomad-client nomad-server deployer;
+    mkClass = name: {
+      services.nomad.settings.client.node_class = name;
+      services.nomad.settings.client.meta.${name} = true;
+      deployment.tags = [name];
+    };
+
+    perf-class = mkClass "perf";
+    perf-ssd-class = mkClass "perf-ssd";
+
+    inherit (nixosModules) common nomad-client nomad-server nomad-ssd deployer;
   in
     {
       meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
@@ -73,7 +87,10 @@ in {
     // (mkNode "leader" "10.200.0.1" [eu-central-1c r5-xlarge nomad-server (ebs 40)])
     // (mkNode "deployer" "10.200.0.2" [eu-central-1b c5-9xlarge deployer (ebs 2000)])
     // (mkNode "explorer" "10.200.1.19" [eu-central-1b m5-4xlarge nomad-client (ebs 40)])
-    // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [eu-central-1b c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [ap-southeast-2b c5-2xlarge nomad-client (ebs 40)])
-    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [us-east-1d c5-2xlarge nomad-client (ebs 40)]);
+    // (mkNodes 1 "client-ssd-eu-%02d" "10.200.21.%d" [c5d-24xlarge nomad-client nomad-ssd perf-ssd-class (ebs 40) eu-central-1b])
+    # // (mkNodes 1 "client-ssd-ap-%02d" "10.200.22.%d" [c5d-24xlarge nomad-client perf-ssd-class (ebs 40) ap-southeast-2b])
+    # // (mkNodes 1 "client-ssd-us-%02d" "10.200.23.%d" [c5d-24xlarge nomad-client perf-ssd-class (ebs 40) us-east-1d])
+    // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [c5-2xlarge nomad-client perf-class (ebs 40) eu-central-1b])
+    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [c5-2xlarge nomad-client perf-class (ebs 40) ap-southeast-2b])
+    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [c5-2xlarge nomad-client perf-class (ebs 40) us-east-1d]);
 }

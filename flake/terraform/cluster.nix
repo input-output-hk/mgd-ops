@@ -51,6 +51,7 @@ in {
         provider.aws = lib.forEach (builtins.attrNames cluster.regions) (region: {
           inherit region;
           alias = underscore region;
+          default_tags.tags = self.cluster.generic;
         });
 
         # Common parameters:
@@ -64,9 +65,9 @@ in {
 
         resource = {
           aws_instance = mapNodes (
-            name: node:
+            _: node:
               {
-                inherit (node.aws.instance) count instance_type;
+                inherit (node.aws.instance) count instance_type tags;
                 provider = awsProviderFor node.aws.region;
                 ami = amis.${node.system.stateVersion}.${node.aws.region}.hvm-ebs;
                 iam_instance_profile = "\${aws_iam_instance_profile.ec2_profile.name}";
@@ -75,7 +76,6 @@ in {
                 vpc_security_group_ids = [
                   "\${aws_security_group.common_${underscore node.aws.region}[0].id}"
                 ];
-                tags = node.aws.instance.tags or {Name = name;};
 
                 root_block_device = {
                   volume_type = "gp3";
@@ -179,10 +179,9 @@ in {
           });
 
           aws_eip = mapNodes (name: node: {
-            inherit (node.aws.instance) count;
+            inherit (node.aws.instance) count tags;
             provider = awsProviderFor node.aws.region;
             instance = "\${aws_instance.${name}[0].id}";
-            tags.Name = name;
           });
 
           aws_eip_association = mapNodes (name: node: {

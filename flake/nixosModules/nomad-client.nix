@@ -21,8 +21,6 @@
         client = {
           enabled = true;
           network_interface = "wg0";
-          meta.perf = "true";
-          node_class = "perf";
 
           server_join = {
             retry_join = [(lib.removeSuffix "/32" (builtins.elemAt nodes.leader.config.networking.wireguard.interfaces.wg0.ips 0))];

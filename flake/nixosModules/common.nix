@@ -76,6 +76,7 @@ parts @ {
       bind
       di
       dnsutils
+      duf
       fd
       file
       git

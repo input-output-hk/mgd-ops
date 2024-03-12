@@ -24,6 +24,14 @@ ssh-for-each *ARGS:
   let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json)
   $nodes | par-each {|node| just ssh -q $node {{ARGS}} }
 
+gc-all:
+  #!/usr/bin/env nu
+  # let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json | filter {|node| $node != "deployer" })
+  let nodes = (nix eval --json '.#nixosConfigurations' --apply builtins.attrNames | from json | filter {|node| $node == "leader" })
+  $nodes | par-each {|node| {$node: (just ssh $node -q di -h -n -I ext4)} } | reduce {|a,b| $a | merge $b } | save --force gc_all_before.json
+  $nodes | par-each {|node| {$node: (just ssh $node -q di -h -n -I ext4)} } | reduce {|a,b| $a | merge $b } | save --force gc_all_after.json
+
+  # $nodes | par-each {|node| just ssh -q $node nix-collect-garbage --delete-older-than 30d }
 bootstrap-ssh HOSTNAME *ARGS:
   #!/usr/bin/env nu
   if not ('.ssh_config' | path exists) {
