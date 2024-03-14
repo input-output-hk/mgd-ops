@@ -105,3 +105,14 @@ nomad-ui:
   #!/usr/bin/env nu
   print "Nomad will be available at http://127.0.0.1:4646"
   ssh -F .ssh_config -N -L 4646:leader:4646 leader
+
+save-ssh-config:
+  #!/usr/bin/env nu
+  print "Retrieving ssh config from tofu..."
+  nix build ".#terraform.cluster" --out-link cluster.tf.json
+  tofu workspace select -or-create default
+  let tf = (tofu show -json | from json)
+  let key = ($tf.values.root_module.resources | where type == local_file and name == ssh_config)
+  $key.values.content | save --force $env.SSH_CONFIG_FILE
+  chmod 0600 $env.SSH_CONFIG_FILE
+  print $"Saved to ($env.SSH_CONFIG_FILE)"
