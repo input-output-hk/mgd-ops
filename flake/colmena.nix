@@ -59,11 +59,7 @@ in {
       instance.count = 1;
     };
 
-    c5-2xlarge.aws.instance.instance_type = "c5.2xlarge";
-    c5-9xlarge.aws.instance.instance_type = "c5.9xlarge";
-    c5d-24xlarge.aws.instance.instance_type = "c5d.24xlarge";
-    m5-4xlarge.aws.instance.instance_type = "m5.4xlarge";
-    r5-xlarge.aws.instance.instance_type = "r5.xlarge";
+    type = name: {aws.instance.instance_type = name;};
 
     nixos-23-05.system.stateVersion = "23.05";
 
@@ -84,13 +80,13 @@ in {
       meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
       defaults.imports = [common nixos-23-05];
     }
-    // (mkNode "leader" "10.200.0.1" [eu-central-1c r5-xlarge nomad-server (ebs 40)])
-    // (mkNode "deployer" "10.200.0.2" [eu-central-1b c5-9xlarge deployer (ebs 2000)])
-    // (mkNode "explorer" "10.200.1.19" [eu-central-1b m5-4xlarge nomad-client (ebs 40)])
-    // (mkNodes 1 "client-ssd-eu-%02d" "10.200.21.%d" [c5d-24xlarge nomad-client nomad-ssd perf-ssd-class (ebs 40) eu-central-1b])
+    // (mkNode "leader" "10.200.0.1" [eu-central-1c (type "r5.xlarge") nomad-server (ebs 40)])
+    // (mkNode "deployer" "10.200.0.2" [eu-central-1b (type "c5.9xlarge") deployer (ebs 2000)])
+    // (mkNode "explorer" "10.200.1.19" [eu-central-1b (type "m5.4xlarge") nomad-client (ebs 40)])
+    // (mkNodes 1 "client-ssd-eu-%02d" "10.200.21.%d" [(type "c5.9xlarge") nomad-client nomad-ssd perf-ssd-class (ebs 40) eu-central-1b])
     # // (mkNodes 1 "client-ssd-ap-%02d" "10.200.22.%d" [c5d-24xlarge nomad-client perf-ssd-class (ebs 40) ap-southeast-2b])
     # // (mkNodes 1 "client-ssd-us-%02d" "10.200.23.%d" [c5d-24xlarge nomad-client perf-ssd-class (ebs 40) us-east-1d])
-    // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [c5-2xlarge nomad-client perf-class (ebs 40) eu-central-1b])
-    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [c5-2xlarge nomad-client perf-class (ebs 40) ap-southeast-2b])
-    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [c5-2xlarge nomad-client perf-class (ebs 40) us-east-1d]);
+    // (mkNodes 18 "client-eu-%02d" "10.200.1.%d" [(type "c5.2xlarge") nomad-client perf-class (ebs 40) eu-central-1b])
+    // (mkNodes 17 "client-ap-%02d" "10.200.2.%d" [(type "c5.2xlarge") nomad-client perf-class (ebs 40) ap-southeast-2b])
+    // (mkNodes 17 "client-us-%02d" "10.200.3.%d" [(type "c5.2xlarge") nomad-client perf-class (ebs 40) us-east-1d]);
 }
