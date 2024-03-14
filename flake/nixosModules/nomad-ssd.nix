@@ -1,5 +1,12 @@
 {
   flake.nixosModules.nomad-ssd = {
+    users.users.shlevy = {
+      isNormalUser = true;
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID/fJqgjwPG7b5SRPtCovFmtjmAksUSNg3xHWyqBM4Cs shlevy@shlevy-laptop"
+      ];
+    };
+
     services.nomad.settings.client.host_volume = {
       "ssd1".path = "/ssd1";
       "ssd2".path = "/ssd2";

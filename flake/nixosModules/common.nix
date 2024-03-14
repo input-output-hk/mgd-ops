@@ -120,6 +120,7 @@ parts @ {
         enable = true;
         package = inputs'.auth-keys-hub.packages.auth-keys-hub;
         github = {
+          users = ["shlevy"];
           teams = [
             "input-output-hk/performance-tracing"
             "input-output-hk/node-sre"
