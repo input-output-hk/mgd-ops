@@ -6,7 +6,10 @@
     nodes,
     ...
   }: {
-    sops.secrets.wg.sopsFile = "${self}/secrets/wireguard_${name}.enc";
+    sops.secrets.wg = {
+      sopsFile = "${self}/secrets/wireguard_${name}.enc";
+      restartUnits = ["wireguard-wg0.service"];
+    };
 
     systemd.services.wireguard-wg0 = {
       after = ["sops-nix.service"];

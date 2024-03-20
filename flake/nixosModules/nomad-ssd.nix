@@ -1,23 +1,21 @@
 {
   flake.nixosModules.nomad-ssd = {
-    # Begin Remove when tooling is multi-cluster
-    users.users.shlevy = {
-      isNormalUser = true;
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID/fJqgjwPG7b5SRPtCovFmtjmAksUSNg3xHWyqBM4Cs shlevy@shlevy-laptop"
-      ];
-    };
-    nix.settings.system-features = [ "benchmark" ];
-    # End Remove when tooling is multi-cluster
+    lib,
+    config,
+    ...
+  }: let
+    ifSSD = lib.mkIf (lib.hasSuffix "d" config.aws.instance.instance_type);
+  in {
+    nix.settings.system-features = ["benchmark"];
 
-    services.nomad.settings.client.host_volume = {
+    services.nomad.settings.client.host_volume = ifSSD {
       "ssd1".path = "/ssd1";
       "ssd2".path = "/ssd2";
       "ssd3".path = "/ssd3";
       "ssd4".path = "/ssd4";
     };
 
-    fileSystems = {
+    fileSystems = ifSSD {
       "/ssd1" = {
         device = "/dev/nvme1n1";
         fsType = "ext2";

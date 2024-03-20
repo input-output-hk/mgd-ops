@@ -44,21 +44,36 @@ parts @ {
       loader.grub.configurationLimit = 10;
     };
 
-    # On boot, SOPS runs in stage 2 without networking, this prevents KMS from
-    # working, so we repeat the activation script until decryption succeeds.
-    systemd.services.sops-boot-fix = lib.mkIf (config.system.activationScripts ? setupSecrets) {
+    # On boot SOPS runs in stage 2 without networking.
+    # For repositories using KMS sops secrets, this prevent KMS from working,
+    # so we repeat the activation script until decryption succeeds.
+    #
+    # Sops-nix module does provide a systemd restart and reload hook for
+    # associated secrets changes with the option:
+    #
+    #   sops.secrets.<name>.<restartUnits|reloadUnits>
+    #
+    # Although the sops-nix restart or reload options are preferred,
+    # sops-secrets service can also act as a generic systemd hook
+    # for services needing to be restarted after new sops secrets are pushed.
+    #
+    # Example usage:
+    #   systemd.services.<name> = {
+    #     after = ["sops-secrets.service"];
+    #     wants = ["sops-secrets.service"];
+    #     partOf = ["sops-secrets.service"];
+    #   };
+    #
+    systemd.services.sops-secrets = lib.mkIf (config.system.activationScripts.setupSecrets ? text) {
       wantedBy = ["multi-user.target"];
       after = ["network-online.target"];
 
-      script = ''
-        ${config.system.activationScripts.setupSecrets.text}
-        systemctl restart wireguard-wg0.service
-      '';
+      script = config.system.activationScripts.setupSecrets.text;
 
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        Restart = "on-failure"; # because oneshot
+        Restart = "on-failure";
         RestartSec = "2s";
       };
     };
@@ -120,7 +135,7 @@ parts @ {
         enable = true;
         package = inputs'.auth-keys-hub.packages.auth-keys-hub;
         github = {
-          users = ["shlevy"];
+          users = ["shlevy:dev" "shlevy:shlevy"];
           teams = [
             "input-output-hk/performance-tracing"
             "input-output-hk/node-sre"
@@ -151,6 +166,8 @@ parts @ {
         };
       };
     };
+
+    users.mutableUsers = false;
 
     users.users.root.openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBbtFrxN6W8MK2e0fDVHVrcgC5ILBitN63wvsIPdUEdB pt-team@perf"
