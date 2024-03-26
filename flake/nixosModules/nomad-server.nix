@@ -34,8 +34,8 @@
         };
 
         limits = {
-          http_max_conns_per_client = 200;
-          rpc_max_conns_per_client = 200;
+          http_max_conns_per_client = 400;
+          rpc_max_conns_per_client = 400;
         };
       };
     };

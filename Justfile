@@ -102,9 +102,37 @@ lint:
   statix check
 
 nomad-ui:
-  #!/usr/bin/env nu
-  print "Nomad will be available at http://127.0.0.1:4646"
+  @echo "Nomad will be available at http://127.0.0.1:4646"
   ssh -F .ssh_config -N -L 4646:leader:4646 leader
+
+# List machines in the cluster
+ls:
+  #!/usr/bin/env nu
+  let nix = (
+    nix eval '.#nixosConfigurations'
+      --json
+      --apply 'n: (map (n: {name=n; in_nixos_conf = true;}) (builtins.attrNames n))'
+      | from json
+      | dfr into-df
+  )
+
+  let list = (
+    just tf show -json
+    | from json
+    | get values.root_module.resources
+    | where type == "aws_instance"
+    | each {|n|
+        {
+          name: $n.name,
+          public_ip: $n.values.public_ip,
+          private_ip: $n.values.private_ip
+        }
+      }
+    | dfr into-df
+    | dfr join --outer $nix name name
+  )
+
+  $list | dfr into-nu
 
 save-ssh-config:
   #!/usr/bin/env nu

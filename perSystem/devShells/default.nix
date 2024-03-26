@@ -17,7 +17,7 @@ flake: {
           deadnix
           inputs'.colmena.packages.colmena
           just
-          nushell
+          nushellFull
           rain
           self'.packages.opentofu
           sops
