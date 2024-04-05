@@ -130,6 +130,7 @@ ls:
       }
     | dfr into-df
     | dfr join --outer $nix name name
+    | dfr sort-by name
   )
 
   $list | dfr into-nu
