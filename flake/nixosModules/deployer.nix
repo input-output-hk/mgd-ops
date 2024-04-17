@@ -1,5 +1,7 @@
-{
+{config, ...}: {
   flake.nixosModules.deployer = {pkgs, ...}: {
+    imports = [config.flake.nixosModules.serve-runs];
+
     aws.instance.tags.Role = "deployer";
 
     fileSystems."/home" = {
