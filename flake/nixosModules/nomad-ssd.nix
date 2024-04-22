@@ -12,12 +12,14 @@
         device = "/dev/nvme1n1";
         fsType = "ext2";
         autoFormat = true;
+        options = ["noatime" "nodiratime" "noacl"];
       };
 
       "/ssd2" = {
         device = "/dev/nvme2n1";
         fsType = "ext2";
         autoFormat = true;
+        options = ["noatime" "nodiratime" "noacl"];
       };
     };
   };
