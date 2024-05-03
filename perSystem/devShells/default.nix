@@ -23,6 +23,7 @@ flake: {
           sops
           statix
           wireguard-tools
+          nomad
         ];
 
         shellHook = ''
