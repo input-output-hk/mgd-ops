@@ -69,6 +69,7 @@ in {
       services.nomad.settings.client.node_class = name;
       services.nomad.settings.client.meta.${name} = true;
       deployment.tags = [name];
+      aws.instance.tags.Class = name;
     };
 
     perf-class = mkClass "perf";
