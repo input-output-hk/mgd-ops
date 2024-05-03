@@ -73,9 +73,8 @@ in {
     };
 
     perf-class = mkClass "perf";
-    perf-ssd-class = mkClass "perf-ssd";
 
-    inherit (nixosModules) common nomad-client nomad-server deployer nomad-ssd nix-private;
+    inherit (nixosModules) common nomad-client nomad-server deployer nix-private;
   in
     {
       meta.nixpkgs = import inputs.nixpkgs {system = "x86_64-linux";};
