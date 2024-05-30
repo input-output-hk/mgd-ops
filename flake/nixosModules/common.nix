@@ -183,6 +183,7 @@ parts @ {
       gc.automatic = false;
 
       settings = {
+        fallback = true;
         max-jobs = "auto";
         experimental-features = ["nix-command" "flakes" "cgroups"];
         auto-optimise-store = true;
