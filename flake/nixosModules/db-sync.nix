@@ -202,5 +202,9 @@
         isSystemUser = true;
       };
     };
+
+    programs.auth-keys-hub.github.teams = [
+      "input-output-hk/mgdoc"
+    ];
   };
 }
