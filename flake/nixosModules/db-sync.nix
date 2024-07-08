@@ -58,13 +58,22 @@
       self.nixosModules.postgrest
     ];
 
-    environment.systemPackages = [
-      cardano-db-tool
-      cardano-node
-      inputs.capkgs.packages.x86_64-linux."db-analyser-input-output-hk-cardano-node-${nodeVersion}"
-      inputs.capkgs.packages.x86_64-linux."db-synthesizer-input-output-hk-cardano-node-${nodeVersion}"
-      inputs.capkgs.packages.x86_64-linux."db-truncater-input-output-hk-cardano-node-${nodeVersion}"
-    ];
+    environment.systemPackages =
+      [
+        cardano-db-tool
+        cardano-node
+        inputs.capkgs.packages.x86_64-linux."db-analyser-input-output-hk-cardano-node-${nodeVersion}"
+        inputs.capkgs.packages.x86_64-linux."db-synthesizer-input-output-hk-cardano-node-${nodeVersion}"
+        inputs.capkgs.packages.x86_64-linux."db-truncater-input-output-hk-cardano-node-${nodeVersion}"
+      ]
+      ++ (with pkgs; [
+        screen
+        sqlite-interactive
+        tmux
+        gnupg
+        pinentry
+        zellij
+      ]);
 
     sops.secrets = let
       mkSecret = name: {
@@ -78,7 +87,17 @@
       kesKey = mkSecret "kes.skey";
       vrfKey = mkSecret "vrf.skey";
       operationalCertificate = mkSecret "opcert.cert";
+      skopeo = {
+        sopsFile = ../../secrets/skopeo.enc;
+        owner = "dev";
+        group = "nixbld";
+        mode = "0444";
+      };
     };
+
+    nix.settings.extra-sandbox-paths = [
+      "/etc/skopeo/auth.json=${config.sops.secrets.skopeo.path}"
+    ];
 
     services = {
       postgrest = {
@@ -195,16 +214,25 @@
 
     # Ensure access to the cardano-node socket
     users = {
-      groups.cardano-db-sync = {};
-      users.cardano-db-sync = {
-        extraGroups = ["cardano-node"];
-        group = "cardano-db-sync";
-        isSystemUser = true;
+      users = {
+        dev = {
+          isNormalUser = true;
+          createHome = true;
+        };
+        cardano-db-sync = {
+          extraGroups = ["cardano-node"];
+          group = "cardano-db-sync";
+          isSystemUser = true;
+        };
       };
+
+      groups.cardano-db-sync = {};
     };
 
     programs.auth-keys-hub.github.teams = [
       "input-output-hk/mgdoc"
     ];
+
+    programs.direnv.enable = true;
   };
 }

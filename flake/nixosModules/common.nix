@@ -121,6 +121,7 @@ parts @ {
     programs = {
       sysdig.enable = true;
       mosh.enable = true;
+      direnv.enable = true;
 
       tmux = {
         enable = true;
