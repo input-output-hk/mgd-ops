@@ -229,9 +229,15 @@
       groups.cardano-db-sync = {};
     };
 
-    programs.auth-keys-hub.github.teams = [
-      "input-output-hk/mgdoc"
-    ];
+    programs.auth-keys-hub.github = {
+      users = [
+        "dev:jhbertra"
+      ];
+
+      teams = [
+        "input-output-hk/mgdoc"
+      ];
+    };
 
     programs.direnv.enable = true;
   };
