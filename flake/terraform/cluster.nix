@@ -256,6 +256,11 @@ in {
                     to_port = 30052;
                   })
                   (mkRule {
+                    description = "Indexer";
+                    from_port = 5580;
+                    to_port = 5580;
+                  })
+                  (mkRule {
                     description = "Allow Wireguard";
                     from_port = 51820;
                     to_port = 51820;

@@ -239,6 +239,6 @@
       ];
     };
 
-    programs.direnv.enable = true;
+    networking.firewall.allowedTCPPorts = [5580];
   };
 }
