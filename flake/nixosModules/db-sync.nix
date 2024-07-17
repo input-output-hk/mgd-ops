@@ -251,14 +251,14 @@
       virtualHosts."tx-builder.${flake.config.flake.cluster.domain}" = {
         extraConfig = ''
           encode zstd gzip
-          reverse_proxy / 127.0.0.1:3080
+          reverse_proxy * 127.0.0.1:3080
         '';
       };
 
       virtualHosts."prov-tree.${flake.config.flake.cluster.domain}" = {
         extraConfig = ''
           encode zstd gzip
-          reverse_proxy / 127.0.0.1:33380
+          reverse_proxy * 127.0.0.1:33380
         '';
       };
     };
