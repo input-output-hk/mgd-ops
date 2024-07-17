@@ -257,8 +257,18 @@ in {
                   })
                   (mkRule {
                     description = "Indexer";
-                    from_port = 5580;
-                    to_port = 5580;
+                    from_port = 3000;
+                    to_port = 3000;
+                  })
+                  (mkRule {
+                    description = "TBD";
+                    from_port = 3080;
+                    to_port = 3080;
+                  })
+                  (mkRule {
+                    description = "Proofd";
+                    from_port = 33380;
+                    to_port = 33380;
                   })
                   (mkRule {
                     description = "Allow Wireguard";
@@ -285,15 +295,24 @@ in {
               };
             });
 
-          aws_route53_record = mapNodes (
-            nodeName: _: {
-              zone_id = "\${data.aws_route53_zone.selected.zone_id}";
-              name = "${nodeName}.\${data.aws_route53_zone.selected.name}";
-              type = "A";
-              ttl = "300";
-              records = ["\${aws_eip.${nodeName}[0].public_ip}"];
-            }
-          );
+          # mapNodes = f: lib.mapAttrs f nodes;
+          aws_route53_record =
+            # lib.mapAttrs' (
+            #   _: nodeConf:
+            #     map (record: {
+            #       name = builtins.hashString "md5" record.name;
+            #       value = record;
+            #     })
+            #     nodeConf.aws.aws_route53_record
+            # )
+            # nodes;
+            builtins.listToAttrs (lib.flatten (builtins.attrValues (lib.mapAttrs (nodeName: node:
+              map (record: {
+                name = "${nodeName}-${record.type}-${builtins.hashString "md5" record.name}";
+                value = record;
+              })
+              node.aws.aws_route53_record)
+            nodes)));
 
           local_file.ssh_config = {
             filename = "\${path.module}/.ssh_config";

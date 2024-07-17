@@ -2,11 +2,12 @@
   inputs,
   self,
   ...
-}: {
+} @ flake: {
   flake.nixosModules.db-sync = {
     lib,
     pkgs,
     config,
+    name,
     ...
   }: let
     system = "x86_64-linux";
@@ -37,7 +38,7 @@
       .cardanoLib;
 
     cardanoLib = mkCardanoLib system inputs.iohk-nix;
-  in let
+
     # inherit (perNodeCfg.pkgs) cardano-db-sync cardano-db-sync-pkgs cardano-db-tool;
     cardano-db-sync-pkgs = {
       cardanoDbSyncHaskellPackages.cardano-db-tool.components.exes.cardano-db-tool =
@@ -75,18 +76,19 @@
         zellij
       ]);
 
-    sops.secrets = let
-      mkSecret = name: {
-        sopsFile = "${self}/secrets/node-spo1/${name}.enc";
-        restartUnits = ["cardano-node.service"];
-        owner = "cardano-node";
-      };
-    in {
-      signingKey = mkSecret "byron-delegate.key";
-      delegationCertificate = mkSecret "byron-delegation.cert";
-      kesKey = mkSecret "kes.skey";
-      vrfKey = mkSecret "vrf.skey";
-      operationalCertificate = mkSecret "opcert.cert";
+    sops.secrets = {
+      #  let
+      #   mkSecret = name: {
+      #     sopsFile = "${self}/secrets/node-spo1/${name}.enc";
+      #     restartUnits = ["cardano-node.service"];
+      #     owner = "cardano-node";
+      #   };
+      # in
+      # signingKey = mkSecret "byron-delegate.key";
+      # delegationCertificate = mkSecret "byron-delegation.cert";
+      # kesKey = mkSecret "kes.skey";
+      # vrfKey = mkSecret "vrf.skey";
+      # operationalCertificate = mkSecret "opcert.cert";
       skopeo = {
         sopsFile = ../../secrets/skopeo.enc;
         owner = "dev";
@@ -101,13 +103,13 @@
 
     services = {
       postgrest = {
-        enable = true;
+        enable = false;
         dbuser = "cexplorer";
         dbname = "cexplorer";
       };
 
       cardano-node = {
-        enable = true;
+        enable = false;
         environment = "perf";
         dbPrefix = "db-perf";
         package = cardano-node;
@@ -139,7 +141,7 @@
       };
 
       postgresql = {
-        enable = true;
+        enable = false;
         package = pkgs.postgresql_16;
         ensureDatabases = ["cexplorer"];
         ensureUsers = [
@@ -166,7 +168,7 @@
       # cardano-postgres.ramAvailableMiB = 2048;
 
       cardano-db-sync = {
-        enable = true;
+        enable = false;
         package = cardano-db-sync;
         dbSyncPkgs = cardano-db-sync-pkgs;
 
@@ -231,7 +233,8 @@
 
     programs.auth-keys-hub.github = {
       users = [
-        "dev:jhbertra"
+        "jhbertra"
+        "paluh"
       ];
 
       teams = [
@@ -239,6 +242,30 @@
       ];
     };
 
-    networking.firewall.allowedTCPPorts = [5580];
+    networking.firewall.allowedTCPPorts = [3000 3080 33380];
+
+    services.caddy = {
+      enable = true;
+      email = "michael.fellinger+cardano-perf-db-sync@iohk.io";
+
+      virtualHosts."tx-builder.${flake.config.flake.cluster.domain}" = {
+        extraConfig = ''
+          encode zstd gzip
+          reverse_proxy / 127.0.0.1:3080
+        '';
+      };
+
+      virtualHosts."prov-tree.${flake.config.flake.cluster.domain}" = {
+        extraConfig = ''
+          encode zstd gzip
+          reverse_proxy / 127.0.0.1:33380
+        '';
+      };
+    };
+
+    aws.aws_route53_record = [
+      {name = "tx-builder.\${data.aws_route53_zone.selected.name}";}
+      {name = "prov-tree.\${data.aws_route53_zone.selected.name}";}
+    ];
   };
 }
