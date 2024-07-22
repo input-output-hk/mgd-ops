@@ -248,10 +248,31 @@
       enable = true;
       email = "michael.fellinger+cardano-perf-db-sync@iohk.io";
 
+      extraConfig = ''
+        (cors) {
+          @cors_preflight method OPTIONS
+
+          header {
+            Access-Control-Allow-Origin *
+            Vary Origin
+            Access-Control-Expose-Headers *
+          }
+
+          handle @cors_preflight {
+            header {
+              Access-Control-Allow-Methods "GET,POST,HEAD,OPTIONS"
+              Access-Control-Max-Age "3600"
+            }
+            respond "" 204
+          }
+        }
+      '';
+
       virtualHosts."tx-builder.${flake.config.flake.cluster.domain}" = {
         extraConfig = ''
           encode zstd gzip
           reverse_proxy * 127.0.0.1:3080
+          import cors
         '';
       };
 
@@ -259,6 +280,7 @@
         extraConfig = ''
           encode zstd gzip
           reverse_proxy * 127.0.0.1:33380
+          import cors
         '';
       };
     };
