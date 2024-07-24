@@ -18,15 +18,12 @@
     opentofu-registry.url = "github:opentofu/registry-stable";
     opentofu-registry.flake = false;
     cardano-db-sync-service = {
-      url = "github:IntersectMBO/cardano-db-sync/sancho-4-3-0";
+      url = "github:IntersectMBO/cardano-db-sync/13.3.0.0";
       flake = false;
     };
     capkgs.url = "github:input-output-hk/capkgs";
     iohk-nix.url = "github:input-output-hk/iohk-nix";
-    cardano-node = {
-      url = "github:IntersectMBO/cardano-node/8.11.0-pre";
-      flake = false;
-    };
+    cardano-node.url = "github:IntersectMBO/cardano-node/9.0.0";
     mgdoc-claim-enablement = {
       url = "git+ssh://git@github.com/input-output-hk/mgdoc-claim-enablement.git";
       flake = false;

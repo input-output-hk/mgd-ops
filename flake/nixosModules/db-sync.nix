@@ -11,8 +11,8 @@
     ...
   }: let
     system = "x86_64-linux";
-    nodeVersion = "8-11-0-pre-38c7f1c";
-    dbSyncVersion = "sancho-4-3-0-56c6b15";
+    nodeVersion = "9-0-0-2820a63";
+    dbSyncVersion = "13-3-0-0-d21895f";
 
     cardano-db-tool = inputs.capkgs.packages.${system}."\"cardano-db-tool:exe:cardano-db-tool\"-input-output-hk-cardano-db-sync-${dbSyncVersion}";
     cardano-db-sync = inputs.capkgs.packages.${system}."\"cardano-db-sync:exe:cardano-db-sync\"-input-output-hk-cardano-db-sync-${dbSyncVersion}";
@@ -46,10 +46,6 @@
       inherit cardanoLib;
       schema = "${inputs.cardano-db-sync-service}/schema";
     };
-
-    inherit (cardanoLib) environments;
-    environmentName = "sanchonet";
-    environmentConfig = environments.${environmentName};
   in {
     aws.instance.tags.Role = "db-sync";
 
@@ -77,18 +73,6 @@
       ]);
 
     sops.secrets = {
-      #  let
-      #   mkSecret = name: {
-      #     sopsFile = "${self}/secrets/node-spo1/${name}.enc";
-      #     restartUnits = ["cardano-node.service"];
-      #     owner = "cardano-node";
-      #   };
-      # in
-      # signingKey = mkSecret "byron-delegate.key";
-      # delegationCertificate = mkSecret "byron-delegation.cert";
-      # kesKey = mkSecret "kes.skey";
-      # vrfKey = mkSecret "vrf.skey";
-      # operationalCertificate = mkSecret "opcert.cert";
       skopeo = {
         sopsFile = ../../secrets/skopeo.enc;
         owner = "dev";
@@ -103,45 +87,29 @@
 
     services = {
       postgrest = {
-        enable = false;
+        enable = true;
         dbuser = "cexplorer";
         dbname = "cexplorer";
       };
 
       cardano-node = {
-        enable = false;
-        environment = "perf";
-        dbPrefix = "db-perf";
+        enable = true;
+        environment = "sanchonet";
         package = cardano-node;
         hostAddr = "0.0.0.0";
         useSystemdReload = true;
         systemdSocketActivation = false;
-        bootstrapPeers = null;
         # usePeersFromLedgerAfterSlot = null;
         useLegacyTracing = true;
-        signingKey = config.sops.secrets.signingKey.path;
-        delegationCertificate = config.sops.secrets.delegationCertificate.path;
-        kesKey = config.sops.secrets.kesKey.path;
-        vrfKey = config.sops.secrets.vrfKey.path;
-        operationalCertificate = config.sops.secrets.operationalCertificate.path;
-
-        environments.perf.nodeConfig =
-          (builtins.fromJSON (
-            lib.fileContents ./node/configuration.json
-          ))
+        cardanoNodePackages =
+          inputs.cardano-node.legacyPackages.x86_64-linux.cardanoNodePackages
           // {
-            ByronGenesisFile = ./node/genesis.byron.json;
-            ShelleyGenesisFile = ./node/genesis.shelley.json;
-            AlonzoGenesisFile = ./node/genesis.alonzo.json;
-            ConwayGenesisFile = ./node/genesis.conway.json;
-            SocketPath = config.services.cardano-node.socketPath 0;
+            cardanoLib = mkCardanoLib system inputs.iohk-nix;
           };
-
-        producers = [];
       };
 
       postgresql = {
-        enable = false;
+        enable = true;
         package = pkgs.postgresql_16;
         ensureDatabases = ["cexplorer"];
         ensureUsers = [
@@ -168,23 +136,11 @@
       # cardano-postgres.ramAvailableMiB = 2048;
 
       cardano-db-sync = {
-        enable = false;
+        enable = true;
         package = cardano-db-sync;
         dbSyncPkgs = cardano-db-sync-pkgs;
 
-        cluster = "perf";
-        environment = {
-          inherit (config.services.cardano-node.environments.perf) nodeConfig;
-          dbSyncConfig =
-            environmentConfig.dbSyncConfig
-            // {
-              NetworkName = "perf";
-              NodeConfigFile = builtins.toFile "config.json" (
-                builtins.toJSON
-                config.services.cardano-node.environments.perf.nodeConfig
-              );
-            };
-        };
+        cluster = "sanchonet";
         socketPath = config.services.cardano-node.socketPath 0;
         explorerConfig = config.services.cardano-db-sync.environment.dbSyncConfig // {PrometheusPort = 8302;};
         logConfig = {};
