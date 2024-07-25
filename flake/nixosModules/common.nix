@@ -121,6 +121,7 @@ parts @ {
     programs = {
       sysdig.enable = true;
       mosh.enable = true;
+      direnv.enable = true;
 
       tmux = {
         enable = true;
@@ -135,7 +136,6 @@ parts @ {
         enable = true;
         package = inputs'.auth-keys-hub.packages.auth-keys-hub;
         github = {
-          users = ["shlevy:dev" "shlevy:shlevy"];
           teams = [
             "input-output-hk/performance-tracing"
             "input-output-hk/node-sre"
